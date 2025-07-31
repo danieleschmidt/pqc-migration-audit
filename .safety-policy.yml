@@ -1,0 +1,103 @@
+# Safety policy configuration for PQC Migration Audit
+# Customizes vulnerability scanning and reporting
+
+# Security policy configuration
+security:
+  # Continue on vulnerability discovery (don't fail CI immediately)
+  continue-on-vulnerability-error: false
+  
+  # Audit bare JSON files
+  audit-and-monitor: true
+  
+  # Ignore vulnerabilities (use sparingly and with justification)
+  ignore-vulnerabilities:
+    # Example format:
+    # - id: "12345"
+    #   reason: "False positive - dev dependency only"
+    #   expires: "2024-12-31"
+  
+  # Ignore specific files/directories
+  ignore-files:
+    - "tests/"
+    - "docs/"
+    - "examples/"
+  
+  # Severity levels to report
+  report-severities:
+    - "critical"
+    - "high" 
+    - "medium"
+    # "low" excluded for now to reduce noise
+  
+  # Output configuration
+  output:
+    format: "json"
+    file: "safety-report.json"
+  
+  # Cryptography-specific checks
+  custom-checks:
+    # Flag outdated cryptographic libraries
+    cryptography-libraries:
+      - name: "cryptography"
+        min-version: "41.0.0"
+        reason: "Required for post-quantum readiness"
+      
+      - name: "pycryptodome"
+        min-version: "3.18.0"
+        reason: "Security updates for side-channel resistance"
+    
+    # Monitor for deprecated crypto algorithms
+    deprecated-algorithms:
+      patterns:
+        - "md5"
+        - "sha1"
+        - "rsa-1024"
+        - "des"
+        - "3des"
+
+# Database configuration
+database:
+  # Use local vulnerability database
+  local: true
+  
+  # Auto-update database
+  auto-update: true
+  
+  # Update frequency
+  update-frequency: "daily"
+
+# Notification settings
+notifications:
+  # Slack webhook for critical vulnerabilities
+  slack:
+    webhook-url: "${SLACK_SECURITY_WEBHOOK}"
+    channel: "#security-alerts"
+    username: "safety-bot"
+    
+  # Email notifications
+  email:
+    recipients:
+      - "security@terragonlabs.com" 
+      - "daniel@terragonlabs.com"
+    smtp-server: "smtp.gmail.com"
+    
+# Reporting configuration
+reports:
+  # Generate detailed reports
+  detailed: true
+  
+  # Include remediation suggestions
+  remediation: true
+  
+  # Export formats
+  formats:
+    - "json"
+    - "html"
+    - "pdf"
+  
+  # Report storage
+  output-dir: "security-reports/"
+  
+  # Historical tracking
+  track-changes: true
+  compare-with-previous: true

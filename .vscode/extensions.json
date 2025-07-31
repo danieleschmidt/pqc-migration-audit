@@ -1,0 +1,38 @@
+{
+    "recommendations": [
+        // Python development
+        "ms-python.python",
+        "ms-python.black-formatter", 
+        "ms-python.isort",
+        "ms-python.mypy-type-checker",
+        
+        // Security and code quality
+        "ms-python.flake8",
+        "github.vscode-github-actions",
+        "redhat.vscode-yaml",
+        
+        // Testing
+        "littlefoxteam.vscode-python-test-adapter",
+        "hbenl.vscode-test-explorer",
+        
+        // Documentation
+        "yzane.markdown-pdf",
+        "davidanson.vscode-markdownlint",
+        
+        // Git and version control
+        "github.vscode-pull-request-github",
+        "gitlens.gitlens",
+        
+        // Container support
+        "ms-vscode-remote.remote-containers",
+        "ms-azuretools.vscode-docker",
+        
+        // Productivity
+        "streetsidesoftware.code-spell-checker",
+        "gruntfuggly.todo-tree",
+        "aaron-bond.better-comments"
+    ],
+    "unwantedRecommendations": [
+        "ms-python.pylint"
+    ]
+}

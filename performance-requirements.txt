@@ -1,0 +1,32 @@
+# Performance testing dependencies for PQC Migration Audit
+# Extend base requirements with performance monitoring tools
+
+# Core performance testing
+pytest-benchmark>=4.0.0
+pytest-xdist>=3.0.0  # Parallel test execution
+pytest-profiling>=1.7.0
+
+# System monitoring
+psutil>=5.9.0
+memory-profiler>=0.60.0
+py-spy>=0.3.14
+
+# Load testing
+locust>=2.14.0
+
+# Performance analysis
+line-profiler>=4.0.0
+scalene>=1.5.21
+py-heat>=0.0.6
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Benchmarking utilities
+pyperf>=2.6.0
+asv>=0.5.1  # Airspeed Velocity benchmarking
+
+# Memory leak detection
+pympler>=0.9
+objgraph>=3.5.0
