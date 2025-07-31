@@ -1,0 +1,86 @@
+# Dependabot configuration for PQC Migration Audit
+# Automated dependency updates and security monitoring
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "terragonlabs/security-team"
+    assignees:
+      - "danieleschmidt"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Cryptography-related packages need special attention
+    labels:
+      - "dependencies"
+      - "security-review-required"
+    # Group related updates
+    groups:
+      cryptography:
+        patterns:
+          - "cryptography*"
+          - "pycryptodome*"
+          - "pyopenssl*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+          - "*test*"
+      linting:
+        patterns:
+          - "black"
+          - "isort" 
+          - "flake8"
+          - "mypy"
+    # Security updates get priority
+    allow:
+      - dependency-type: "direct"
+        update-type: "security"
+      - dependency-type: "indirect"
+        update-type: "security"
+      - dependency-type: "direct"
+        update-type: "version-update:semver-patch"
+      - dependency-type: "direct"
+        update-type: "version-update:semver-minor"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "monthly"
+      day: "1"
+      time: "09:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "ci/cd"
+      - "dependencies"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "docker"
+      - "dependencies"

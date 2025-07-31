@@ -1,0 +1,70 @@
+# Docker Compose for PQC Migration Audit Development
+version: '3.8'
+
+services:
+  pqc-audit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: pqc-migration-audit:latest
+    container_name: pqc-audit
+    volumes:
+      # Mount workspace for scanning external repos
+      - ./workspace:/workspace:ro
+      # Mount output directory for reports  
+      - ./reports:/reports
+    environment:
+      - PQC_AUDIT_LOG_LEVEL=INFO
+      - PQC_AUDIT_OUTPUT_DIR=/reports
+    networks:
+      - pqc-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+
+  # Development environment with hot reload
+  pqc-audit-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: pqc-migration-audit:dev
+    container_name: pqc-audit-dev
+    volumes:
+      - .:/app
+      - ./workspace:/workspace
+      - ./reports:/reports
+    environment:
+      - PYTHONPATH=/app/src
+      - PQC_AUDIT_DEV_MODE=true
+    command: ["bash"]
+    stdin_open: true
+    tty: true
+    networks:
+      - pqc-network
+
+  # Testing service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile  
+      target: builder
+    image: pqc-migration-audit:test
+    volumes:
+      - .:/app
+      - test-coverage:/app/htmlcov
+    command: ["pytest", "--cov", "--cov-report=html"]
+    networks:
+      - pqc-network
+
+networks:
+  pqc-network:
+    driver: bridge
+
+volumes:
+  test-coverage:

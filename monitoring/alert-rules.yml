@@ -1,0 +1,178 @@
+# Prometheus alert rules for PQC Migration Audit
+groups:
+  - name: pqc_audit_application
+    rules:
+      # Application health alerts
+      - alert: PQCAuditServiceDown
+        expr: up{job="pqc-audit-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: pqc-audit
+        annotations:
+          summary: "PQC Audit service is down"
+          description: "PQC Audit service has been down for more than 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(pqc_audit_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: pqc-audit
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second"
+
+      # Security-specific alerts
+      - alert: CriticalVulnerabilityDetected
+        expr: pqc_audit_vulnerabilities_critical > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Critical vulnerability detected"
+          description: "{{ $value }} critical vulnerabilities found in scanned repositories"
+
+      - alert: SecurityScanFailure
+        expr: increase(pqc_audit_scan_failures_total[1h]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Multiple security scan failures"
+          description: "{{ $value }} security scans have failed in the last hour"
+
+      # Performance alerts
+      - alert: SlowScanPerformance
+        expr: histogram_quantile(0.95, rate(pqc_audit_scan_duration_seconds_bucket[10m])) > 300
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "Slow scan performance"
+          description: "95th percentile scan time is {{ $value }} seconds"
+
+      - alert: HighMemoryUsage
+        expr: pqc_audit_memory_usage_bytes / pqc_audit_memory_limit_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} of available memory"
+
+  - name: system_health
+    rules:
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 80% for {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        for: 5m
+        labels:
+          severity: critical
+          category: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is below 20% for {{ $labels.instance }}"
+
+  - name: container_health
+    rules:
+      # Container alerts
+      - alert: ContainerKilled
+        expr: time() - container_last_seen > 60
+        for: 0m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container killed"
+          description: "Container {{ $labels.name }} has disappeared"
+
+      - alert: ContainerHighCPU
+        expr: (sum(rate(container_cpu_usage_seconds_total[3m])) by (container_label_com_docker_compose_service) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container high CPU usage"
+          description: "Container {{ $labels.container_label_com_docker_compose_service }} CPU usage is above 80%"
+
+  - name: security_monitoring
+    rules:
+      # Security monitoring alerts
+      - alert: UnauthorizedAccess
+        expr: increase(pqc_audit_unauthorized_access_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Unauthorized access detected"
+          description: "{{ $value }} unauthorized access attempts detected"
+
+      - alert: SuspiciousActivity
+        expr: increase(pqc_audit_suspicious_activity_total[5m]) > 10
+        for: 0m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious activities detected in the last 5 minutes"
+
+      - alert: DependencyVulnerabilityFound
+        expr: pqc_audit_dependency_vulnerabilities_high > 0
+        for: 0m
+        labels:
+          severity: high
+          category: security
+        annotations:
+          summary: "High severity dependency vulnerability"
+          description: "{{ $value }} high severity vulnerabilities found in dependencies"
+
+  - name: business_metrics
+    rules:
+      # Business KPIs
+      - alert: LowScanCompletionRate
+        expr: (pqc_audit_scans_successful / pqc_audit_scans_total) < 0.9
+        for: 15m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "Low scan completion rate"
+          description: "Scan completion rate is {{ $value | humanizePercentage }}"
+
+      - alert: HighFalsePositiveRate
+        expr: (pqc_audit_false_positives / pqc_audit_total_findings) > 0.15
+        for: 30m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "High false positive rate"
+          description: "False positive rate is {{ $value | humanizePercentage }}"

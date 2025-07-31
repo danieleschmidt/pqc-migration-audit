@@ -1,0 +1,140 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PQC Audit - Debug CLI",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/pqc_migration_audit/cli.py",
+            "args": ["scan", ".", "--verbose", "--debug"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "PQC_AUDIT_DEBUG": "true",
+                "PQC_AUDIT_LOG_LEVEL": "DEBUG"
+            },
+            "justMyCode": false,
+            "stopOnEntry": false
+        },
+        {
+            "name": "PQC Audit - Debug with Profiling",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o", "${workspaceFolder}/debug_profile.prof",
+                "${workspaceFolder}/src/pqc_migration_audit/cli.py",
+                "scan", "${input:targetPath}"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "PQC Audit - Memory Profiling",
+            "type": "python", 
+            "request": "launch",
+            "module": "memory_profiler",
+            "args": [
+                "${workspaceFolder}/src/pqc_migration_audit/cli.py",
+                "scan", "${input:targetPath}"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "Debug Tests - All",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=long",
+                "--capture=no"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Tests - Security",
+            "type": "python",
+            "request": "launch", 
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-m", "security",
+                "-v",
+                "--tb=long", 
+                "--capture=no"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Tests - Performance",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest", 
+            "args": [
+                "tests/performance/",
+                "-v",
+                "--tb=long",
+                "--capture=no"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Single Test",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${input:testPath}",
+                "-v",
+                "--tb=long",
+                "--capture=no"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Attach to Running Process",
+            "type": "python", 
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "justMyCode": false
+        }
+    ],
+    "inputs": [
+        {
+            "id": "targetRepository",
+            "description": "Path to repository to scan",
+            "default": ".",
+            "type": "promptString"
+        },
+        {
+            "id": "targetPath",
+            "description": "Target path for profiling",
+            "default": ".",
+            "type": "promptString"
+        },
+        {
+            "id": "testPath",
+            "description": "Path to specific test file",
+            "default": "tests/test_core.py",
+            "type": "promptString"
+        }
+    ]
+}

@@ -1,0 +1,79 @@
+{
+  "name": "PQC Migration Audit Development",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  
+  // Configure VS Code settings
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "python.testing.pytestEnabled": true,
+        "terminal.integrated.shell.linux": "/bin/zsh"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.mypy-type-checker",
+        "github.vscode-github-actions",
+        "ms-vscode.docker",
+        "redhat.vscode-yaml"
+      ]
+    }
+  },
+  
+  // Container configuration
+  "runArgs": [
+    "--name=pqc-audit-dev",
+    "--hostname=pqc-dev",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp=unconfined"
+  ],
+  
+  // Port forwarding for development services
+  "forwardPorts": [
+    8000,  // Application
+    3000,  // Grafana
+    9090,  // Prometheus
+    5432   // PostgreSQL (if used)
+  ],
+  
+  // Post-creation commands
+  "postCreateCommand": "pip install -e .[dev,test] && pre-commit install",
+  
+  // Development user configuration
+  "remoteUser": "pqcdev",
+  "updateRemoteUserUID": true,
+  
+  // Mount configuration
+  "mounts": [
+    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached",
+    "source=pqc-audit-vscode-extensions,target=/home/pqcdev/.vscode-server/extensions,type=volume",
+    "source=pqc-audit-cache,target=/home/pqcdev/.cache,type=volume"
+  ],
+  
+  // Environment variables
+  "containerEnv": {
+    "PYTHONPATH": "/workspace/src",
+    "PQC_AUDIT_DEV_MODE": "true",
+    "PQC_AUDIT_LOG_LEVEL": "DEBUG"
+  },
+  
+  // Features to install
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  
+  // Lifecycle scripts
+  "initializeCommand": "echo 'Initializing PQC Audit development environment...'",
+  "onCreateCommand": "chmod +x scripts/*.sh",
+  "updateContentCommand": "pip install -e .[dev,test] --upgrade",
+  "postStartCommand": "git config --global --add safe.directory /workspace"
+}

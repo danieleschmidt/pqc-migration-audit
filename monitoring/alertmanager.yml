@@ -1,0 +1,156 @@
+# Alertmanager configuration for PQC Migration Audit
+global:
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@terragonlabs.com'
+  smtp_auth_username: 'alerts@terragonlabs.com'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  
+  # Default notification settings
+  resolve_timeout: 5m
+
+# Templates for alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert routing
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  
+  routes:
+    # Critical security alerts - immediate notification
+    - match:
+        severity: critical
+        category: security
+      receiver: 'security-critical'
+      group_wait: 0s
+      repeat_interval: 5m
+      
+    # Application errors
+    - match:
+        service: pqc-audit
+      receiver: 'app-team'
+      group_interval: 2m
+      
+    # System alerts
+    - match:
+        category: system
+      receiver: 'infrastructure-team'
+      
+    # Performance issues
+    - match:
+        category: performance
+      receiver: 'performance-team'
+      group_interval: 10m
+      
+    # Business metrics
+    - match:
+        category: business
+      receiver: 'product-team'
+      repeat_interval: 24h
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  # Inhibit warning alerts if critical alerts are firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+    
+  # Inhibit individual service alerts if service is down
+  - source_match:
+      alertname: 'PQCAuditServiceDown'
+    target_match:
+      service: 'pqc-audit'
+    equal: ['instance']
+
+# Receivers define notification destinations
+receivers:
+  # Default receiver
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'alerts@terragonlabs.com'
+        subject: '[PQC Audit] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+  # Critical security alerts
+  - name: 'security-critical'
+    email_configs:
+      - to: 'security@terragonlabs.com'
+        subject: '🚨 CRITICAL SECURITY ALERT: {{ .GroupLabels.alertname }}'
+        body: |
+          CRITICAL SECURITY INCIDENT DETECTED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          
+          Labels: {{ range .Labels.SortedPairs }}
+          - {{ .Name }}: {{ .Value }}{{ end }}
+          {{ end }}
+          
+          IMMEDIATE ACTION REQUIRED
+    
+    slack_configs:
+      - api_url: '${SLACK_SECURITY_WEBHOOK}'
+        channel: '#security-alerts'
+        username: 'AlertManager'
+        color: 'danger'
+        title: '🚨 Critical Security Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        
+    webhook_configs:
+      - url: 'http://pagerduty-webhook:8080/security-critical'
+        send_resolved: true
+
+  # Application team alerts
+  - name: 'app-team'
+    email_configs:
+      - to: 'dev-team@terragonlabs.com'
+        subject: '[PQC Audit App] {{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
+        
+    slack_configs:
+      - api_url: '${SLACK_DEV_WEBHOOK}'
+        channel: '#pqc-audit-alerts'
+        username: 'PQC Audit Monitor'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: 'PQC Audit Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+
+  # Infrastructure team
+  - name: 'infrastructure-team'
+    email_configs:
+      - to: 'infra@terragonlabs.com'
+        subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
+        
+  # Performance team  
+  - name: 'performance-team'
+    email_configs:
+      - to: 'performance@terragonlabs.com'
+        subject: '[Performance] {{ .GroupLabels.alertname }}'
+        
+  # Product team
+  - name: 'product-team'
+    email_configs:
+      - to: 'product@terragonlabs.com'
+        subject: '[Business Metrics] {{ .GroupLabels.alertname }}'

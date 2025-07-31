@@ -1,0 +1,85 @@
+# SBOM (Software Bill of Materials) Configuration
+# Supports SPDX 2.3 and CycloneDX formats for supply chain security
+
+sbom:
+  # Document metadata
+  document_name: "pqc-migration-audit-sbom"
+  document_namespace: "https://github.com/terragonlabs/pqc-migration-audit"
+  creators:
+    - "Tool: syft"
+    - "Organization: TerragonLabs"
+  
+  # Package information
+  package:
+    name: "pqc-migration-audit"
+    version: "${VERSION}"
+    supplier: "TerragonLabs"
+    download_location: "https://github.com/terragonlabs/pqc-migration-audit"
+    license_concluded: "MIT"
+    copyright_text: "Copyright 2024 TerragonLabs"
+    
+  # Generation settings
+  formats:
+    - "spdx-json"
+    - "cyclonedx-json"
+    - "syft-json"
+  
+  # Include/exclude patterns
+  include:
+    - "src/**/*.py"
+    - "requirements*.txt"
+    - "pyproject.toml"
+    - "setup.py"
+  
+  exclude:
+    - "tests/**"
+    - "docs/**"
+    - "*.pyc"
+    - "__pycache__/**"
+    
+  # Dependency analysis
+  relationships:
+    - type: "DEPENDS_ON"
+      comment: "Runtime dependencies"
+    - type: "DEV_DEPENDENCY_OF"
+      comment: "Development dependencies"
+    - type: "TEST_DEPENDENCY_OF"  
+      comment: "Test dependencies"
+
+# Tool-specific configurations
+syft:
+  # Cataloger configurations
+  catalogers:
+    enabled:
+      - "python-cataloger"
+      - "requirements-cataloger"
+      - "setup-py-cataloger"
+  
+  # Output configuration
+  output:
+    - format: "spdx-json"
+      file: "sbom.spdx.json"
+    - format: "cyclonedx-json"
+      file: "sbom.cyclonedx.json"
+
+# Security and compliance
+security:
+  # Cryptographic package identification
+  crypto_packages:
+    - "cryptography"
+    - "pycryptodome"
+    - "pyopenssl"
+    - "hashlib"
+    - "hmac"
+  
+  # Supply chain risk assessment
+  risk_assessment:
+    critical_dependencies:
+      - "cryptography"
+      - "requests"
+    
+    # NIST 800-161 compliance markers
+    supply_chain_controls:
+      - "dependency-verification"
+      - "source-integrity"
+      - "build-reproducibility"
