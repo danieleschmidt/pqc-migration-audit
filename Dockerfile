@@ -4,14 +4,18 @@
 # Build stage
 FROM python:3.11-slim as builder
 
-# Security: Create non-root user
-RUN groupadd -r pqcaudit && useradd -r -g pqcaudit pqcaudit
+# Security: Create non-root user with specific UID/GID
+RUN groupadd -r -g 1000 pqcaudit && useradd -r -u 1000 -g pqcaudit pqcaudit
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install build dependencies and security updates
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get autoremove -y \
+    && apt-get autoclean
 
 WORKDIR /app
 COPY pyproject.toml requirements*.txt ./
@@ -25,14 +29,16 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Production stage
 FROM python:3.11-slim as production
 
-# Security hardening
-RUN groupadd -r pqcaudit && useradd -r -g pqcaudit pqcaudit \
-    && apt-get update \
+# Security hardening and system setup
+RUN groupadd -r -g 1000 pqcaudit && useradd -r -u 1000 -g pqcaudit pqcaudit \
+    && apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         git \
         ca-certificates \
+        tini \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove
+    && apt-get autoremove -y \
+    && apt-get autoclean
 
 # Copy from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
@@ -49,6 +55,14 @@ USER pqcaudit
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pqc-audit --version || exit 1
 
-# Default command
-ENTRYPOINT ["pqc-audit"]
+# Security labels and metadata
+LABEL maintainer="daniel@terragonlabs.com" \
+      version="1.0.0" \
+      description="PQC Migration Audit - Post-Quantum Cryptography Analysis Tool" \
+      org.opencontainers.image.source="https://github.com/danieleschmidt/pqc-migration-audit" \
+      org.opencontainers.image.documentation="https://pqc-migration-audit.readthedocs.io" \
+      org.opencontainers.image.licenses="MIT"
+
+# Use tini as init system for proper signal handling
+ENTRYPOINT ["tini", "--", "pqc-audit"]
 CMD ["--help"]

@@ -212,3 +212,54 @@ __marimo__/
 .terragon/*.pkl
 .terragon/*-history.json
 .terragon/backlog.json
+
+# PQC Migration Audit specific
+pqc-reports/
+*.pqc-report
+.pqc-baseline.json
+.pqc-cache/
+
+# Security scanning
+.scanignore
+*.sarif
+security-reports/
+
+# Development tools
+.tool-versions
+.nvmrc
+.python-version
+node_modules/
+.npm/
+.yarn/
+package-lock.json
+yarn.lock
+
+# IDE and editor files
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
