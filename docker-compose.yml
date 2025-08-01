@@ -62,9 +62,92 @@ services:
     networks:
       - pqc-network
 
+  # Security scanner service
+  security-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: pqc-migration-audit:security
+    volumes:
+      - .:/app
+      - security-reports:/app/security-reports
+    command: ["bash", "-c", "bandit -r src/ -f json -o security-reports/bandit.json && safety check --json --output security-reports/safety.json"]
+    networks:
+      - pqc-network
+
+  # Documentation server
+  docs:
+    image: nginx:alpine
+    container_name: pqc-docs
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docs/_build/html:/usr/share/nginx/html:ro
+    networks:
+      - pqc-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docs.rule=Host(`docs.pqc-audit.local`)"
+
+  # Development database (for advanced features)
+  database:
+    image: postgres:15-alpine
+    container_name: pqc-audit-db
+    environment:
+      POSTGRES_DB: pqc_audit
+      POSTGRES_USER: pqc_user
+      POSTGRES_PASSWORD: pqc_dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - pqc-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pqc_user -d pqc_audit"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: pqc-audit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass redis_dev_password
+    networks:
+      - pqc-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   pqc-network:
     driver: bridge
+    labels:
+      - "project=pqc-migration-audit"
 
 volumes:
   test-coverage:
+    driver: local
+    labels:
+      - "project=pqc-migration-audit"
+  security-reports:
+    driver: local
+    labels:
+      - "project=pqc-migration-audit"
+  postgres_data:
+    driver: local
+    labels:
+      - "project=pqc-migration-audit"
+  redis_data:
+    driver: local
+    labels:
+      - "project=pqc-migration-audit"

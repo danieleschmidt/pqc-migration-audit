@@ -1,11 +1,21 @@
 # Docker ignore file for PQC Migration Audit
-# Exclude development and build artifacts
+# Optimize build context and improve security
 
-# Git
+# Version control
 .git
 .gitignore
+.gitattributes
+.github/
 
-# Python
+# Documentation (not needed in container)
+*.md
+docs/
+examples/
+CHANGELOG.md
+README.md
+LICENSE
+
+# Python cache and build artifacts
 __pycache__/
 *.py[cod]
 *$py.class
@@ -26,49 +36,157 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
+.nox/
 coverage.xml
 *.cover
 .hypothesis/
+.cache
+nosetests.xml
+tests/
+test_*.py
+*_test.py
 
-# Environment
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
+# Development tools
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# Documentation
-docs/_build/
-
-# Temporary files
-*.tmp
-*.log
-*.bak
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Docker
+# Environment and configuration
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.envrc
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Linting and formatting
+.flake8
+.mypy_cache/
+.ruff_cache/
+.pylintrc
+.isort.cfg
+.black
+
+# Security
+.secrets.baseline
+.bandit
+security-reports/
+
+# CI/CD
+.travis.yml
+.circleci/
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+pids/
+*.pid
+*.seed
+*.pid.lock
+.lock-wscript
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor backup files
+*~
+.#*
+#*#
+.*.sw*
+
+# Dependencies
+node_modules/
+bower_components/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Package files
+*.tgz
+*.tar.gz
+
+# Docker files (avoid recursive Docker builds)
 Dockerfile*
 docker-compose*.yml
 .dockerignore
 
-# Reports and workspace (will be mounted)
-reports/
-workspace/
+# Monitoring and observability (not needed in production image)
+monitoring/
+grafana/
+prometheus/
+
+# Development scripts
+scripts/dev-*
+scripts/debug-*
+scripts/local-*
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Project specific
+pqc-reports/
+*.pqc-report
+.pqc-baseline.json
+.pqc-cache/
+
+# Terragon specific (development artifacts)
+.terragon/
+BACKLOG.md
+
+# Pre-commit
+.pre-commit-config.yaml
+.pre-commit-hooks.yaml
+
+# Performance testing
+performance-requirements.txt
+benchmarks/
+
+# Container scanning results
+*.sarif
+container-scan-results/
+vulnerability-reports/
