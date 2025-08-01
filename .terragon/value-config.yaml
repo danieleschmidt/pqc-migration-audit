@@ -1,0 +1,190 @@
+# Terragon Autonomous SDLC Value Discovery Configuration
+# Repository: pqc-migration-audit
+# Maturity Level: Maturing (65%)
+
+scoring:
+  # Adaptive weights based on repository maturity level
+  weights:
+    nascent:
+      wsjf: 0.4
+      ice: 0.3
+      technicalDebt: 0.2
+      security: 0.1
+    developing:
+      wsjf: 0.5
+      ice: 0.2
+      technicalDebt: 0.2
+      security: 0.1
+    maturing:  # Current level
+      wsjf: 0.6
+      ice: 0.1
+      technicalDebt: 0.2
+      security: 0.1
+    advanced:
+      wsjf: 0.5
+      ice: 0.1
+      technicalDebt: 0.3
+      security: 0.1
+  
+  # Scoring thresholds and multipliers
+  thresholds:
+    minScore: 10
+    maxRisk: 0.8
+    securityBoost: 2.0
+    complianceBoost: 1.8
+    performanceBoost: 1.5
+    debtPenalty: 0.7
+
+  # Custom scoring factors for security-focused projects
+  customFactors:
+    cryptographyFactor: 2.5
+    pqcReadinessFactor: 3.0
+    vulnerabilityFactor: 2.8
+    complianceFactor: 2.2
+
+discovery:
+  # Signal sources for value discovery
+  sources:
+    - gitHistory
+    - staticAnalysis
+    - issueTrackers
+    - vulnerabilityDatabases
+    - performanceMonitoring
+    - userFeedback
+    - codeComments
+    - dependencyAudits
+  
+  # Tool integrations
+  tools:
+    staticAnalysis:
+      - mypy
+      - flake8
+      - black
+      - isort
+      - bandit  # Security-focused
+    security:
+      - bandit
+      - safety
+      - semgrep
+      - trivy
+    performance:
+      - pytest-benchmark
+      - memory-profiler
+    quality:
+      - pytest
+      - coverage
+      - complexity-checker
+
+  # Search patterns for different value opportunities
+  patterns:
+    technicalDebt:
+      - "TODO"
+      - "FIXME" 
+      - "HACK"
+      - "XXX"
+      - "DEPRECATED"
+      - "temporary"
+      - "quick fix"
+    security:
+      - "crypto"
+      - "encrypt"
+      - "decrypt"
+      - "key"
+      - "rsa"
+      - "ecc"
+      - "password"
+      - "secret"
+    performance: 
+      - "slow"
+      - "optimize"
+      - "bottleneck"
+      - "performance"
+      - "memory"
+    features:
+      - "enhance"
+      - "improve"
+      - "feature"
+      - "requirement"
+
+execution:
+  # Execution constraints
+  maxConcurrentTasks: 1
+  maxExecutionTime: 7200  # 2 hours
+  
+  # Quality gates
+  testRequirements:
+    minCoverage: 80
+    performanceRegression: 5
+    securityCheck: true
+  
+  # Rollback triggers
+  rollbackTriggers:
+    - testFailure
+    - buildFailure
+    - securityViolation
+    - coverageDropBelow80
+  
+  # Scheduling
+  schedule:
+    immediate: "on_pr_merge"
+    hourly: "security_scan"
+    daily: "comprehensive_analysis"
+    weekly: "deep_sdlc_assessment"
+    monthly: "strategic_review"
+
+# Repository-specific configuration
+repository:
+  name: "pqc-migration-audit"
+  type: "security-tool"
+  primaryLanguage: "python"
+  maturityLevel: 65
+  
+  # Critical paths for this security-focused project
+  criticalPaths:
+    - "src/pqc_migration_audit/core.py"
+    - "src/pqc_migration_audit/cli.py"
+    - "tests/"
+    - "docs/security/"
+  
+  # High-value improvement areas
+  valueAreas:
+    - cryptographicImplementation
+    - securityVulnerabilityDetection
+    - performanceOptimization
+    - documentationCompleteness
+    - testCoverage
+    - codeQuality
+
+# Metrics tracking
+metrics:
+  trackingEnabled: true
+  historyRetention: 90  # days
+  reportingInterval: "weekly"
+  
+  # KPIs to track
+  kpis:
+    - valueDelivered
+    - technicalDebtReduced
+    - securityImprovements
+    - performanceGains
+    - codeQualityImprovement
+    - testCoverageIncrease
+    - documentationCompleteness
+
+# Learning and adaptation
+learning:
+  enabled: true
+  adaptationThreshold: 0.2
+  feedbackWindow: 30  # days
+  
+  # Model parameters for continuous improvement
+  models:
+    effortEstimation:
+      accuracy: 0.85
+      recalibrationFrequency: "monthly"
+    valuePredicition:
+      accuracy: 0.78
+      adaptationRate: 0.1
+    riskAssessment:
+      falsePositiveRate: 0.12
+      sensitivityThreshold: 0.8
