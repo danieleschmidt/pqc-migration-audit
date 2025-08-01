@@ -13,16 +13,42 @@
         "python.linting.flake8Enabled": true,
         "python.linting.mypyEnabled": true,
         "python.formatting.provider": "black",
+        "python.sortImports.provider": "isort",
         "python.testing.pytestEnabled": true,
-        "terminal.integrated.shell.linux": "/bin/zsh"
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": ["tests"],
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+          }
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/.coverage": true,
+          "**/htmlcov": true
+        },
+        "terminal.integrated.shell.linux": "/bin/bash"
       },
       "extensions": [
         "ms-python.python",
+        "ms-python.flake8",
         "ms-python.black-formatter",
+        "ms-python.isort",
         "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-python.pytest",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
         "github.vscode-github-actions",
-        "ms-vscode.docker",
-        "redhat.vscode-yaml"
+        "gruntfuggly.todo-tree",
+        "eamodio.gitlens",
+        "ms-vscode.makefile-tools",
+        "esbenp.prettier-vscode"
       ]
     }
   },
