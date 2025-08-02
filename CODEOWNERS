@@ -1,0 +1,58 @@
+# CODEOWNERS file for PQC Migration Audit project
+# This file defines who should review changes to specific files or directories
+
+# Global owners (default reviewers for everything)
+* @danieleschmidt @terragonlabs/security-team
+
+# Core source code - requires security team review
+src/ @danieleschmidt @terragonlabs/security-team @terragonlabs/crypto-experts
+
+# Cryptographic implementations - requires crypto expert review
+src/pqc_migration_audit/core.py @terragonlabs/crypto-experts @terragonlabs/security-team
+
+# Configuration files - requires devops review
+*.yml @danieleschmidt @terragonlabs/devops-team
+*.yaml @danieleschmidt @terragonlabs/devops-team
+Dockerfile @terragonlabs/devops-team
+docker-compose*.yml @terragonlabs/devops-team
+
+# Security-related files - requires security team review
+SECURITY.md @terragonlabs/security-team
+.github/workflows/ @terragonlabs/security-team @terragonlabs/devops-team
+scripts/container-security-scan.sh @terragonlabs/security-team
+
+# Documentation - technical writers and maintainers
+docs/ @danieleschmidt @terragonlabs/tech-writers
+*.md @danieleschmidt @terragonlabs/tech-writers
+
+# Testing infrastructure - QA team review
+tests/ @danieleschmidt @terragonlabs/qa-team
+pytest.ini @terragonlabs/qa-team
+conftest.py @terragonlabs/qa-team
+
+# Build and dependency management - devops team
+pyproject.toml @terragonlabs/devops-team
+requirements*.txt @terragonlabs/devops-team
+Makefile @terragonlabs/devops-team
+
+# Monitoring and metrics - SRE team
+monitoring/ @terragonlabs/sre-team
+scripts/automation/ @terragonlabs/sre-team
+.github/project-metrics.json @terragonlabs/sre-team
+
+# Community and legal files - require maintainer approval
+LICENSE @danieleschmidt
+CODE_OF_CONDUCT.md @danieleschmidt
+CONTRIBUTING.md @danieleschmidt
+PROJECT_CHARTER.md @danieleschmidt
+
+# Architecture decisions - senior engineers and architects
+docs/adr/ @danieleschmidt @terragonlabs/architects @terragonlabs/senior-engineers
+
+# Performance and optimization - performance team
+docs/performance/ @terragonlabs/performance-team
+tests/performance/ @terragonlabs/performance-team
+
+# Compliance and audit - compliance team
+docs/compliance/ @terragonlabs/compliance-team
+sbom-config.yml @terragonlabs/compliance-team
