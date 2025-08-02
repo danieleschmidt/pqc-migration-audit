@@ -1,0 +1,121 @@
+{
+  "project": {
+    "name": "pqc-migration-audit",
+    "description": "Post-Quantum Cryptography Migration Audit Tool",
+    "repository": "danieleschmidt/pqc-migration-audit",
+    "created_date": "2025-01-01",
+    "version": "1.0.0",
+    "license": "Apache-2.0"
+  },
+  "metrics": {
+    "code_quality": {
+      "test_coverage_threshold": 80,
+      "test_coverage_current": 0,
+      "code_complexity_threshold": 10,
+      "technical_debt_ratio_threshold": 5,
+      "security_hotspots_threshold": 0,
+      "security_vulnerabilities_threshold": 0,
+      "bugs_threshold": 0,
+      "code_smells_threshold": 50
+    },
+    "security": {
+      "high_severity_vulnerabilities": 0,
+      "medium_severity_vulnerabilities": 0,
+      "low_severity_vulnerabilities": 0,
+      "security_score": 100,
+      "last_security_scan": null,
+      "slsa_level": 3,
+      "sbom_generated": true,
+      "secret_scanning_enabled": true
+    },
+    "performance": {
+      "build_time_seconds": 0,
+      "test_execution_time_seconds": 0,
+      "docker_image_size_mb": 0,
+      "scan_performance_files_per_second": 100,
+      "memory_usage_peak_mb": 512,
+      "cpu_usage_peak_percent": 75
+    },
+    "automation": {
+      "ci_success_rate_percent": 100,
+      "deployment_frequency": "weekly",
+      "lead_time_for_changes_hours": 24,
+      "mean_time_to_recovery_hours": 4,
+      "change_failure_rate_percent": 5,
+      "automated_test_percentage": 90
+    },
+    "maintenance": {
+      "dependency_updates_per_month": 4,
+      "outdated_dependencies": 0,
+      "security_updates_pending": 0,
+      "documentation_coverage_percent": 85,
+      "code_review_participation_percent": 100,
+      "issue_resolution_time_days": 7
+    },
+    "business": {
+      "active_users": 0,
+      "scan_executions_per_month": 0,
+      "false_positive_rate_percent": 5,
+      "customer_satisfaction_score": 0,
+      "time_to_complete_audit_hours": 2,
+      "cost_per_scan_usd": 0.50
+    }
+  },
+  "tracking_config": {
+    "collection_frequency": "daily",
+    "reporting_frequency": "weekly",
+    "dashboard_url": "https://grafana.terragonlabs.com/pqc-audit",
+    "alert_channels": ["slack", "email"],
+    "retention_days": 365,
+    "automated_collection": true
+  },
+  "thresholds": {
+    "critical": {
+      "test_coverage_below": 70,
+      "security_vulnerabilities_above": 0,
+      "build_failure_rate_above": 10,
+      "performance_degradation_above": 50
+    },
+    "warning": {
+      "test_coverage_below": 80,
+      "technical_debt_ratio_above": 3,
+      "outdated_dependencies_above": 5,
+      "scan_time_above_seconds": 300
+    }
+  },
+  "reports": {
+    "weekly_summary": {
+      "enabled": true,
+      "recipients": ["team@terragonlabs.com"],
+      "format": "markdown"
+    },
+    "monthly_detailed": {
+      "enabled": true,
+      "recipients": ["management@terragonlabs.com"],
+      "format": "pdf"
+    },
+    "quarterly_review": {
+      "enabled": true,
+      "recipients": ["stakeholders@terragonlabs.com"],
+      "format": "presentation"
+    }
+  },
+  "integrations": {
+    "github_actions": {
+      "enabled": true,
+      "webhook_url": "https://api.github.com/repos/danieleschmidt/pqc-migration-audit/dispatches"
+    },
+    "prometheus": {
+      "enabled": true,
+      "endpoint": "http://localhost:9090/metrics"
+    },
+    "grafana": {
+      "enabled": true,
+      "dashboard_id": "pqc-audit-overview"
+    },
+    "slack": {
+      "enabled": true,
+      "channel": "#pqc-audit-alerts"
+    }
+  }
+}
