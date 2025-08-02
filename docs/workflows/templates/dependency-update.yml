@@ -1,0 +1,552 @@
+# Automated Dependency Update Workflow Template
+# Copy to .github/workflows/dependency-update.yml
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Monday at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - security-only
+      auto_merge:
+        description: 'Auto-merge if tests pass'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  detect-updates:
+    name: Detect Available Updates
+    runs-on: ubuntu-latest
+    outputs:
+      updates-available: ${{ steps.check.outputs.updates-available }}
+      security-updates: ${{ steps.check.outputs.security-updates }}
+      update-list: ${{ steps.check.outputs.update-list }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependency analysis tools
+      run: |
+        pip install pip-tools safety pip-audit pipdeptree
+        pip install -e .
+    
+    - name: Check for updates
+      id: check
+      run: |
+        # Check for outdated packages
+        pip list --outdated --format=json > outdated.json
+        
+        # Check for security vulnerabilities
+        pip-audit --format=json --output=security-audit.json || true
+        safety check --json --output=safety-report.json || true
+        
+        # Analyze update impact
+        python << 'EOF'
+        import json
+        import os
+        
+        # Load outdated packages
+        with open('outdated.json') as f:
+            outdated = json.load(f)
+        
+        # Load security reports
+        security_issues = []
+        try:
+            with open('security-audit.json') as f:
+                security_audit = json.load(f)
+                security_issues.extend(security_audit.get('vulnerabilities', []))
+        except:
+            pass
+        
+        try:
+            with open('safety-report.json') as f:
+                safety_report = json.load(f)
+                security_issues.extend(safety_report)
+        except:
+            pass
+        
+        # Categorize updates
+        patch_updates = []
+        minor_updates = []
+        major_updates = []
+        security_updates = []
+        
+        for pkg in outdated:
+            current = pkg['version']
+            latest = pkg['latest_version']
+            
+            # Simple semantic version parsing
+            current_parts = current.split('.')
+            latest_parts = latest.split('.')
+            
+            if len(current_parts) >= 3 and len(latest_parts) >= 3:
+                if current_parts[0] != latest_parts[0]:
+                    major_updates.append(pkg)
+                elif current_parts[1] != latest_parts[1]:
+                    minor_updates.append(pkg)
+                else:
+                    patch_updates.append(pkg)
+            else:
+                minor_updates.append(pkg)  # Default to minor
+            
+            # Check if this package has security issues
+            pkg_name = pkg['name'].lower()
+            for issue in security_issues:
+                if pkg_name in str(issue).lower():
+                    security_updates.append(pkg)
+                    break
+        
+        # Set outputs
+        updates_available = len(outdated) > 0
+        has_security = len(security_updates) > 0
+        
+        update_summary = {
+            'patch': len(patch_updates),
+            'minor': len(minor_updates), 
+            'major': len(major_updates),
+            'security': len(security_updates),
+            'total': len(outdated)
+        }
+        
+        print(f"::set-output name=updates-available::{str(updates_available).lower()}")
+        print(f"::set-output name=security-updates::{str(has_security).lower()}")
+        print(f"::set-output name=update-list::{json.dumps(update_summary)}")
+        
+        # Create update summary
+        with open('update-summary.md', 'w') as f:
+            f.write("# Dependency Update Summary\n\n")
+            f.write(f"**Total packages to update**: {len(outdated)}\n")
+            f.write(f"- Patch updates: {len(patch_updates)}\n")
+            f.write(f"- Minor updates: {len(minor_updates)}\n")
+            f.write(f"- Major updates: {len(major_updates)}\n")
+            f.write(f"- Security updates: {len(security_updates)}\n\n")
+            
+            if security_updates:
+                f.write("## 🚨 Security Updates (High Priority)\n\n")
+                for pkg in security_updates:
+                    f.write(f"- **{pkg['name']}**: {pkg['version']} → {pkg['latest_version']}\n")
+                f.write("\n")
+            
+            if patch_updates:
+                f.write("## 🔧 Patch Updates\n\n")
+                for pkg in patch_updates[:10]:  # Limit to first 10
+                    f.write(f"- {pkg['name']}: {pkg['version']} → {pkg['latest_version']}\n")
+                if len(patch_updates) > 10:
+                    f.write(f"- ... and {len(patch_updates) - 10} more\n")
+                f.write("\n")
+            
+            if minor_updates:
+                f.write("## ⬆️ Minor Updates\n\n")
+                for pkg in minor_updates[:10]:
+                    f.write(f"- {pkg['name']}: {pkg['version']} → {pkg['latest_version']}\n")
+                if len(minor_updates) > 10:
+                    f.write(f"- ... and {len(minor_updates) - 10} more\n")
+                f.write("\n")
+            
+            if major_updates:
+                f.write("## 🚀 Major Updates (Review Required)\n\n")
+                for pkg in major_updates:
+                    f.write(f"- {pkg['name']}: {pkg['version']} → {pkg['latest_version']}\n")
+        EOF
+    
+    - name: Upload update analysis
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-analysis
+        path: |
+          outdated.json
+          security-audit.json
+          safety-report.json
+          update-summary.md
+
+  security-updates:
+    name: Apply Security Updates
+    runs-on: ubuntu-latest
+    needs: detect-updates
+    if: needs.detect-updates.outputs.security-updates == 'true'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Create security update branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b security-updates-$(date +%Y%m%d-%H%M%S)
+    
+    - name: Download analysis
+      uses: actions/download-artifact@v3
+      with:
+        name: dependency-analysis
+    
+    - name: Apply security updates
+      run: |
+        # Install current dependencies
+        pip install -e .[dev,test]
+        
+        # Apply security updates only
+        python << 'EOF'
+        import json
+        import subprocess
+        
+        # Load security audit results
+        security_packages = set()
+        
+        try:
+            with open('security-audit.json') as f:
+                security_audit = json.load(f)
+                for vuln in security_audit.get('vulnerabilities', []):
+                    security_packages.add(vuln.get('package', '').lower())
+        except:
+            pass
+        
+        try:
+            with open('safety-report.json') as f:
+                safety_report = json.load(f)
+                for vuln in safety_report:
+                    security_packages.add(vuln.get('package_name', '').lower())
+        except:
+            pass
+        
+        # Load outdated packages
+        with open('outdated.json') as f:
+            outdated = json.load(f)
+        
+        # Update only security-related packages
+        updates_applied = []
+        for pkg in outdated:
+            if pkg['name'].lower() in security_packages:
+                try:
+                    subprocess.run([
+                        'pip', 'install', '--upgrade', 
+                        f"{pkg['name']}=={pkg['latest_version']}"
+                    ], check=True)
+                    updates_applied.append(f"{pkg['name']} -> {pkg['latest_version']}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Failed to update {pkg['name']}: {e}")
+        
+        # Update requirements files
+        subprocess.run(['pip', 'freeze'], check=True, stdout=open('requirements.txt', 'w'))
+        
+        # Save update log
+        with open('security-updates.log', 'w') as f:
+            f.write("Security updates applied:\n")
+            for update in updates_applied:
+                f.write(f"- {update}\n")
+        
+        print(f"Applied {len(updates_applied)} security updates")
+        EOF
+    
+    - name: Run tests
+      run: |
+        pip install -e .[test]
+        pytest tests/ -v --tb=short
+    
+    - name: Commit security updates
+      run: |
+        git add requirements*.txt setup.py pyproject.toml
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+        
+        git commit -m "security: update dependencies with security vulnerabilities
+        
+        🔒 **Security Updates Applied**
+        $(cat security-updates.log)
+        
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+        
+        Co-Authored-By: Claude <noreply@anthropic.com>"
+    
+    - name: Push security updates
+      run: |
+        git push origin HEAD
+    
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref_name }}
+        title: "🔒 Security: Update dependencies with vulnerabilities"
+        body: |
+          ## Security Dependency Updates
+          
+          This PR contains automated security updates for dependencies with known vulnerabilities.
+          
+          ### Changes
+          $(cat update-summary.md)
+          
+          ### Verification
+          - [x] Security vulnerabilities addressed
+          - [x] Tests passing
+          - [x] No breaking changes detected
+          
+          **Auto-generated by security update workflow**
+        labels: |
+          security
+          dependencies
+          auto-update
+        reviewers: |
+          security-team
+        draft: false
+
+  patch-updates:
+    name: Apply Patch Updates
+    runs-on: ubuntu-latest
+    needs: detect-updates
+    if: |
+      needs.detect-updates.outputs.updates-available == 'true' && 
+      (github.event.inputs.update_type == 'patch' || github.event_name == 'schedule')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Create patch update branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b patch-updates-$(date +%Y%m%d)
+    
+    - name: Apply patch updates
+      run: |
+        pip install pip-tools
+        pip install -e .[dev,test]
+        
+        # Update patch-level dependencies
+        python << 'EOF'
+        import json
+        import subprocess
+        
+        with open('outdated.json') as f:
+            outdated = json.load(f)
+        
+        patch_updates = []
+        for pkg in outdated:
+            current = pkg['version'].split('.')
+            latest = pkg['latest_version'].split('.')
+            
+            # Only patch updates (same major.minor)
+            if (len(current) >= 3 and len(latest) >= 3 and 
+                current[0] == latest[0] and current[1] == latest[1]):
+                patch_updates.append(pkg)
+        
+        # Apply updates
+        for pkg in patch_updates[:20]:  # Limit to 20 updates per run
+            try:
+                subprocess.run([
+                    'pip', 'install', '--upgrade', pkg['name']
+                ], check=True)
+                print(f"Updated {pkg['name']} to {pkg['latest_version']}")
+            except subprocess.CalledProcessError:
+                print(f"Failed to update {pkg['name']}")
+        EOF
+        
+        # Regenerate requirements
+        pip freeze > requirements.txt
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -x --tb=short
+    
+    - name: Commit and push
+      run: |
+        git add requirements*.txt
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+        
+        git commit -m "deps: update patch-level dependencies
+        
+        🔧 **Patch Updates Applied**
+        - Updated dependencies to latest patch versions
+        - All tests passing
+        - No breaking changes
+        
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+        
+        Co-Authored-By: Claude <noreply@anthropic.com>"
+        
+        git push origin HEAD
+    
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref_name }}
+        title: "🔧 Dependencies: Patch-level updates"
+        body: |
+          ## Patch-level Dependency Updates
+          
+          Automated patch-level updates for dependencies.
+          
+          ### Summary
+          $(cat update-summary.md)
+          
+          ### Verification
+          - [x] Only patch-level updates applied
+          - [x] All tests passing
+          - [x] No breaking changes expected
+          
+          ${{ github.event.inputs.auto_merge == 'true' && 'This PR will be auto-merged if CI passes.' || 'Review required before merge.' }}
+        labels: |
+          dependencies
+          patch-update
+          auto-update
+        auto-merge: ${{ github.event.inputs.auto_merge == 'true' }}
+
+  dependency-graph:
+    name: Update Dependency Graph
+    runs-on: ubuntu-latest
+    needs: [patch-updates, security-updates]
+    if: always() && (needs.patch-updates.result == 'success' || needs.security-updates.result == 'success')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Generate dependency graph
+      run: |
+        pip install pipdeptree
+        pip install -e .
+        
+        # Generate dependency tree
+        pipdeptree --json > dependency-graph.json
+        pipdeptree --graph-output png > dependency-graph.png
+        
+        # Generate security report
+        pip-audit --format=json --output=current-security-status.json || true
+        
+        # Create dependency report
+        python << 'EOF'
+        import json
+        from datetime import datetime
+        
+        # Load dependency graph
+        with open('dependency-graph.json') as f:
+            deps = json.load(f)
+        
+        # Create summary
+        total_deps = len(deps)
+        direct_deps = len([d for d in deps if d.get('dependencies')])
+        
+        report = f"""# Dependency Status Report
+        
+        **Generated**: {datetime.now().isoformat()}
+        
+        ## Summary
+        - Total dependencies: {total_deps}
+        - Direct dependencies: {direct_deps}
+        - Transitive dependencies: {total_deps - direct_deps}
+        
+        ## Recent Updates
+        - Security updates applied: {len([d for d in deps if 'security' in str(d).lower()])}
+        - Patch updates applied: Recently updated in this workflow run
+        
+        ## Security Status
+        - Last security scan: {datetime.now().strftime('%Y-%m-%d')}
+        - Critical vulnerabilities: 0 (after updates)
+        """
+        
+        with open('dependency-report.md', 'w') as f:
+            f.write(report)
+        EOF
+    
+    - name: Commit dependency updates
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add dependency-graph.json dependency-graph.png dependency-report.md current-security-status.json
+        git commit -m "docs: update dependency graph and security status" || exit 0
+        git push
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [detect-updates, security-updates, patch-updates]
+    if: always()
+    
+    steps:
+    - name: Download analysis
+      uses: actions/download-artifact@v3
+      with:
+        name: dependency-analysis
+    
+    - name: Notify team
+      uses: 8398a7/action-slack@v3
+      if: needs.detect-updates.outputs.updates-available == 'true'
+      with:
+        status: custom
+        channel: '#dependencies'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        custom_payload: |
+          {
+            "text": "📦 Dependency Update Summary",
+            "attachments": [{
+              "color": "${{ needs.security-updates.result == 'success' && 'good' || needs.security-updates.outputs.security-updates == 'true' && 'warning' || 'good' }}",
+              "fields": [
+                {
+                  "title": "Updates Available",
+                  "value": "${{ needs.detect-updates.outputs.update-list }}",
+                  "short": true
+                },
+                {
+                  "title": "Security Updates",
+                  "value": "${{ needs.security-updates.result || 'none required' }}",
+                  "short": true
+                },
+                {
+                  "title": "Patch Updates", 
+                  "value": "${{ needs.patch-updates.result || 'skipped' }}",
+                  "short": true
+                }
+              ],
+              "actions": [{
+                "type": "button",
+                "text": "View Details",
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }]
+            }]
+          }

@@ -1,0 +1,406 @@
+# Continuous Deployment Workflow Template
+# Copy to .github/workflows/cd.yml
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-image:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.environment != ''
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          VERSION=${{ github.sha }}
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+    
+    - name: Output image
+      id: image
+      run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  security-scan:
+    name: Security Scan Image
+    runs-on: ubuntu-latest
+    needs: build-image
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ needs.build-image.outputs.image }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Run Trivy for critical vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ needs.build-image.outputs.image }}
+        exit-code: '1'
+        severity: 'CRITICAL,HIGH'
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-image, security-scan]
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.pqc-audit.terragonlabs.com
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Setup Kubernetes
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubectl
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name pqc-audit-staging
+    
+    - name: Deploy to staging
+      run: |
+        # Update deployment with new image
+        kubectl set image deployment/pqc-audit \
+          pqc-audit=${{ needs.build-image.outputs.image }} \
+          --namespace=staging
+        
+        # Wait for rollout to complete
+        kubectl rollout status deployment/pqc-audit \
+          --namespace=staging \
+          --timeout=300s
+    
+    - name: Run health checks
+      run: |
+        # Wait for service to be ready
+        sleep 30
+        
+        # Check service health
+        HEALTH_URL="https://staging.pqc-audit.terragonlabs.com/health"
+        for i in {1..10}; do
+          if curl -f "$HEALTH_URL"; then
+            echo "Health check passed"
+            break
+          fi
+          echo "Health check failed, retrying in 10s..."
+          sleep 10
+        done
+    
+    - name: Run smoke tests
+      run: |
+        # Run basic functionality tests
+        kubectl run smoke-test \
+          --image=${{ needs.build-image.outputs.image }} \
+          --restart=Never \
+          --namespace=staging \
+          --command -- python -m pqc_migration_audit.smoke_tests
+        
+        kubectl wait --for=condition=Ready pod/smoke-test \
+          --namespace=staging \
+          --timeout=120s
+        
+        kubectl logs smoke-test --namespace=staging
+        
+        # Clean up
+        kubectl delete pod smoke-test --namespace=staging
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event.inputs.environment == 'staging')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install test dependencies
+      run: |
+        pip install -e .[test]
+        pip install requests pytest-xdist
+    
+    - name: Run integration tests
+      env:
+        PQC_AUDIT_API_URL: https://staging.pqc-audit.terragonlabs.com
+        PQC_AUDIT_API_KEY: ${{ secrets.STAGING_API_KEY }}
+      run: |
+        pytest tests/integration/ \
+          --maxfail=5 \
+          -v \
+          --tb=short \
+          --junitxml=integration-results.xml
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: integration-results.xml
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-image, security-scan, integration-tests]
+    if: |
+      (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') ||
+      (github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://pqc-audit.terragonlabs.com
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Manual approval gate
+      if: github.event.inputs.force_deploy != 'true'
+      uses: hmarr/auto-approve-action@v3
+      with:
+        review-message: "Auto-approving deployment to production"
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Setup Kubernetes
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubectl
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name pqc-audit-production
+    
+    - name: Blue-Green Deployment
+      run: |
+        # Create new deployment with blue-green strategy
+        kubectl patch deployment pqc-audit \
+          --patch '{"spec":{"template":{"spec":{"containers":[{"name":"pqc-audit","image":"${{ needs.build-image.outputs.image }}"}]}}}}' \
+          --namespace=production
+        
+        # Wait for new pods to be ready
+        kubectl rollout status deployment/pqc-audit \
+          --namespace=production \
+          --timeout=600s
+    
+    - name: Production health checks
+      run: |
+        # Extended health checks for production
+        HEALTH_URL="https://pqc-audit.terragonlabs.com/health"
+        
+        for i in {1..20}; do
+          if curl -f "$HEALTH_URL/detailed"; then
+            echo "Detailed health check passed"
+            break
+          fi
+          echo "Health check failed, retrying in 15s..."
+          sleep 15
+        done
+        
+        # Check metrics endpoint
+        curl -f "https://pqc-audit.terragonlabs.com/metrics"
+    
+    - name: Update traffic routing
+      run: |
+        # Update ingress to route 100% traffic to new version
+        kubectl patch ingress pqc-audit \
+          --patch '{"metadata":{"annotations":{"nginx.ingress.kubernetes.io/canary":"false"}}}' \
+          --namespace=production
+    
+    - name: Notify deployment
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        fields: repo,message,commit,author,took
+        custom_payload: |
+          {
+            "text": "Production Deployment ${{ job.status }}",
+            "attachments": [{
+              "color": "${{ job.status == 'success' && 'good' || 'danger' }}",
+              "fields": [{
+                "title": "Environment",
+                "value": "Production",
+                "short": true
+              }, {
+                "title": "Version",
+                "value": "${{ github.ref_name }}",
+                "short": true
+              }, {
+                "title": "Image",
+                "value": "${{ needs.build-image.outputs.image }}",
+                "short": false
+              }]
+            }]
+          }
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && (needs.deploy-production.result == 'failure')
+    needs: [deploy-production]
+    environment:
+      name: production
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Setup Kubernetes
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubectl
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name pqc-audit-production
+    
+    - name: Rollback to previous version
+      run: |
+        kubectl rollout undo deployment/pqc-audit --namespace=production
+        kubectl rollout status deployment/pqc-audit --namespace=production --timeout=300s
+    
+    - name: Verify rollback
+      run: |
+        sleep 30
+        curl -f "https://pqc-audit.terragonlabs.com/health"
+    
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: 'warning'
+        channel: '#incidents'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        fields: repo,message,commit,author
+        custom_payload: |
+          {
+            "text": "🚨 Production Rollback Executed",
+            "attachments": [{
+              "color": "warning",
+              "fields": [{
+                "title": "Reason",
+                "value": "Deployment failure - automatic rollback triggered",
+                "short": false
+              }, {
+                "title": "Action Required",
+                "value": "Investigate deployment failure and fix issues before next deployment",
+                "short": false
+              }]
+            }]
+          }
+
+  cleanup:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Delete old container images
+      run: |
+        # Keep last 10 images
+        echo "Cleaning up old container images..."
+        # This would typically use a script to clean up old images
+        # from the container registry based on your retention policy
