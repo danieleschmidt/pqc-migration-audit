@@ -1,0 +1,352 @@
+{
+  "project": {
+    "name": "pqc-migration-audit",
+    "description": "Post-Quantum Cryptography Migration Audit Tool",
+    "repository": "danieleschmidt/pqc-migration-audit",
+    "created": "2025-01-15",
+    "version": "1.0.0",
+    "license": "MIT",
+    "language": "Python",
+    "classification": "security-tool"
+  },
+  "metrics": {
+    "development": {
+      "commit_frequency": {
+        "target": "daily",
+        "measurement": "commits_per_day",
+        "threshold": {
+          "green": ">= 2",
+          "yellow": "1-2", 
+          "red": "< 1"
+        }
+      },
+      "code_quality": {
+        "coverage": {
+          "target": 85,
+          "current": 0,
+          "measurement": "percentage",
+          "threshold": {
+            "green": ">= 85",
+            "yellow": "70-84",
+            "red": "< 70"
+          }
+        },
+        "complexity": {
+          "target": "< 10",
+          "measurement": "cyclomatic_complexity",
+          "threshold": {
+            "green": "< 8",
+            "yellow": "8-12",
+            "red": "> 12"
+          }
+        },
+        "debt_ratio": {
+          "target": "< 5%",
+          "measurement": "technical_debt_percentage",
+          "threshold": {
+            "green": "< 3%",
+            "yellow": "3-5%",
+            "red": "> 5%"
+          }
+        }
+      },
+      "velocity": {
+        "story_points": {
+          "target": 30,
+          "measurement": "points_per_sprint",
+          "sprint_length": "2_weeks"
+        },
+        "lead_time": {
+          "target": "< 3 days",
+          "measurement": "hours",
+          "threshold": {
+            "green": "< 24",
+            "yellow": "24-72",
+            "red": "> 72"
+          }
+        }
+      }
+    },
+    "security": {
+      "vulnerability_management": {
+        "critical_response_time": {
+          "target": "< 4 hours",
+          "measurement": "hours",
+          "threshold": {
+            "green": "< 4",
+            "yellow": "4-24", 
+            "red": "> 24"
+          }
+        },
+        "high_response_time": {
+          "target": "< 24 hours",
+          "measurement": "hours",
+          "threshold": {
+            "green": "< 12",
+            "yellow": "12-24",
+            "red": "> 24"
+          }
+        },
+        "scan_frequency": {
+          "target": "daily",
+          "measurement": "scans_per_day",
+          "automated": true
+        }
+      },
+      "cryptographic_quality": {
+        "pqc_readiness": {
+          "target": "100%",
+          "measurement": "percentage",
+          "threshold": {
+            "green": ">= 95",
+            "yellow": "80-94",
+            "red": "< 80"
+          }
+        },
+        "legacy_crypto_count": {
+          "target": 0,
+          "measurement": "count",
+          "threshold": {
+            "green": "0",
+            "yellow": "1-5",
+            "red": "> 5"
+          }
+        }
+      }
+    },
+    "performance": {
+      "scan_performance": {
+        "files_per_minute": {
+          "target": 1000,
+          "measurement": "files/minute",
+          "threshold": {
+            "green": ">= 1000",
+            "yellow": "500-999",
+            "red": "< 500"
+          }
+        },
+        "scan_accuracy": {
+          "target": 99,
+          "measurement": "percentage",
+          "threshold": {
+            "green": ">= 99",
+            "yellow": "95-98",
+            "red": "< 95"
+          }
+        },
+        "false_positive_rate": {
+          "target": "< 1%",
+          "measurement": "percentage",
+          "threshold": {
+            "green": "< 1",
+            "yellow": "1-3",
+            "red": "> 3"
+          }
+        }
+      },
+      "system_health": {
+        "uptime": {
+          "target": 99.9,
+          "measurement": "percentage",
+          "sla": "99.5%"
+        },
+        "response_time": {
+          "target": "< 2s",
+          "measurement": "seconds",
+          "percentile": "p95"
+        },
+        "memory_usage": {
+          "target": "< 80%",
+          "measurement": "percentage",
+          "threshold": {
+            "green": "< 70",
+            "yellow": "70-85",
+            "red": "> 85"
+          }
+        }
+      }
+    },
+    "business": {
+      "adoption": {
+        "active_users": {
+          "target": 1000,
+          "measurement": "monthly_active_users",
+          "growth_rate": "10% monthly"
+        },
+        "repositories_scanned": {
+          "target": 10000,
+          "measurement": "total_repositories",
+          "growth_rate": "20% monthly"
+        }
+      },
+      "value_delivery": {
+        "vulnerabilities_prevented": {
+          "target": 100,
+          "measurement": "count_per_month",
+          "value_per_vulnerability": "$5000"
+        },
+        "time_saved": {
+          "target": 1000,
+          "measurement": "hours_per_month",
+          "value_per_hour": "$100"
+        }
+      }
+    },
+    "compliance": {
+      "nist_compliance": {
+        "score": {
+          "target": 100,
+          "measurement": "percentage",
+          "framework": "NIST Cybersecurity Framework"
+        }
+      },
+      "iso27001_compliance": {
+        "score": {
+          "target": 95,
+          "measurement": "percentage",
+          "framework": "ISO 27001"
+        }
+      },
+      "pci_dss_compliance": {
+        "score": {
+          "target": 100,
+          "measurement": "percentage",
+          "framework": "PCI DSS",
+          "applicable": false,
+          "reason": "No payment processing"
+        }
+      }
+    }
+  },
+  "automation": {
+    "ci_cd": {
+      "build_success_rate": {
+        "target": 95,
+        "measurement": "percentage",
+        "period": "monthly"
+      },
+      "deployment_frequency": {
+        "target": "daily",
+        "measurement": "deployments_per_day",
+        "current": "manual"
+      },
+      "rollback_rate": {
+        "target": "< 5%",
+        "measurement": "percentage",
+        "of": "deployments"
+      }
+    },
+    "testing": {
+      "automated_test_coverage": {
+        "target": 90,
+        "measurement": "percentage",
+        "types": ["unit", "integration", "security"]
+      },
+      "test_execution_time": {
+        "target": "< 10 minutes",
+        "measurement": "minutes",
+        "full_suite": true
+      }
+    },
+    "monitoring": {
+      "alert_accuracy": {
+        "target": 90,
+        "measurement": "percentage",
+        "definition": "actionable_alerts / total_alerts"
+      },
+      "mttr": {
+        "target": "< 30 minutes",
+        "measurement": "minutes",
+        "definition": "mean_time_to_resolution"
+      }
+    }
+  },
+  "reporting": {
+    "frequency": {
+      "daily": ["security_scans", "performance_metrics", "error_rates"],
+      "weekly": ["vulnerability_trends", "performance_trends", "usage_analytics"],
+      "monthly": ["business_metrics", "compliance_status", "technical_debt"],
+      "quarterly": ["strategic_metrics", "roadmap_progress", "capacity_planning"]
+    },
+    "stakeholders": {
+      "development_team": ["code_quality", "velocity", "technical_debt"],
+      "security_team": ["vulnerability_metrics", "compliance_status", "threat_intelligence"],
+      "management": ["business_metrics", "user_adoption", "value_delivery"],
+      "executives": ["strategic_kpis", "risk_metrics", "roi_analysis"]
+    },
+    "delivery_methods": {
+      "dashboard": {
+        "url": "https://metrics.pqc-audit.terragonlabs.com",
+        "update_frequency": "real-time",
+        "access_control": "role_based"
+      },
+      "email": {
+        "weekly_summary": "team@terragonlabs.com",
+        "monthly_report": "executives@terragonlabs.com",
+        "alerts": "oncall@terragonlabs.com"
+      },
+      "slack": {
+        "channel": "#pqc-metrics",
+        "daily_summary": true,
+        "alert_notifications": true
+      }
+    }
+  },
+  "data_sources": {
+    "github": {
+      "api_endpoint": "https://api.github.com",
+      "metrics": ["commits", "pull_requests", "issues", "releases"],
+      "refresh_rate": "hourly"
+    },
+    "ci_cd": {
+      "github_actions": {
+        "metrics": ["build_status", "test_results", "deployment_status"],
+        "refresh_rate": "on_completion"
+      }
+    },
+    "monitoring": {
+      "prometheus": {
+        "endpoint": "http://prometheus:9090",
+        "metrics": ["system_metrics", "application_metrics", "custom_metrics"],
+        "refresh_rate": "real-time"
+      },
+      "grafana": {
+        "endpoint": "http://grafana:3000",
+        "dashboards": ["system_health", "application_performance", "business_metrics"],
+        "refresh_rate": "real-time"
+      }
+    },
+    "security": {
+      "codecov": {
+        "metrics": ["test_coverage", "coverage_trends"],
+        "refresh_rate": "on_push"
+      },
+      "snyk": {
+        "metrics": ["vulnerability_count", "severity_distribution"],
+        "refresh_rate": "daily"
+      }
+    }
+  },
+  "collection_config": {
+    "retention_policy": {
+      "raw_data": "3 months",
+      "aggregated_data": "2 years",
+      "archived_data": "7 years"
+    },
+    "privacy": {
+      "pii_handling": "anonymized",
+      "data_classification": "internal",
+      "compliance": ["GDPR", "CCPA"]
+    },
+    "quality": {
+      "validation_rules": [
+        "range_checks",
+        "data_type_validation",
+        "completeness_checks",
+        "consistency_validation"
+      ],
+      "anomaly_detection": true,
+      "manual_verification": "monthly"
+    }
+  }
+}
