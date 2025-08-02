@@ -1,0 +1,141 @@
+# Prometheus Recording Rules for PQC Migration Audit
+groups:
+  - name: pqc_audit_recording_rules
+    interval: 30s
+    rules:
+      # Aggregated scan performance metrics
+      - record: pqc:scan_rate_5m
+        expr: rate(pqc_scans_total[5m])
+        labels:
+          metric_type: "performance"
+          
+      - record: pqc:scan_success_rate_5m
+        expr: rate(pqc_scans_total{status="success"}[5m]) / rate(pqc_scans_total[5m])
+        labels:
+          metric_type: "performance"
+          
+      - record: pqc:scan_duration_p99_5m
+        expr: histogram_quantile(0.99, rate(pqc_scan_duration_seconds_bucket[5m]))
+        labels:
+          metric_type: "performance"
+          
+      - record: pqc:scan_duration_p95_5m
+        expr: histogram_quantile(0.95, rate(pqc_scan_duration_seconds_bucket[5m]))
+        labels:
+          metric_type: "performance"
+          
+      - record: pqc:scan_duration_p50_5m
+        expr: histogram_quantile(0.50, rate(pqc_scan_duration_seconds_bucket[5m]))
+        labels:
+          metric_type: "performance"
+
+  - name: pqc_vulnerability_metrics
+    interval: 60s
+    rules:
+      # Vulnerability detection rates
+      - record: pqc:vulnerabilities_critical_rate_1h
+        expr: rate(pqc_vulnerabilities_found{severity="critical"}[1h])
+        labels:
+          metric_type: "security"
+          
+      - record: pqc:vulnerabilities_high_rate_1h
+        expr: rate(pqc_vulnerabilities_found{severity="high"}[1h])
+        labels:
+          metric_type: "security"
+          
+      - record: pqc:vulnerabilities_by_algorithm_1h
+        expr: sum(rate(pqc_vulnerabilities_found[1h])) by (algorithm)
+        labels:
+          metric_type: "security"
+          
+      # Risk assessment metrics
+      - record: pqc:risk_score_avg_24h
+        expr: avg_over_time(pqc_risk_assessment_score[24h])
+        labels:
+          metric_type: "risk"
+          
+      - record: pqc:quantum_readiness_percentage
+        expr: (pqc_algorithms_migrated_total / (pqc_algorithms_migrated_total + pqc_vulnerabilities_found)) * 100
+        labels:
+          metric_type: "migration"
+
+  - name: pqc_system_health
+    interval: 15s
+    rules:
+      # Service availability
+      - record: pqc:service_availability_5m
+        expr: avg_over_time(up{job="pqc-audit-app"}[5m])
+        labels:
+          metric_type: "availability"
+          
+      # Resource utilization
+      - record: pqc:memory_utilization_percentage
+        expr: (process_resident_memory_bytes{job="pqc-audit-app"} / node_memory_MemTotal_bytes) * 100
+        labels:
+          metric_type: "resources"
+          
+      - record: pqc:cpu_utilization_percentage
+        expr: rate(process_cpu_seconds_total{job="pqc-audit-app"}[5m]) * 100
+        labels:
+          metric_type: "resources"
+          
+      # Error rates
+      - record: pqc:error_rate_5m
+        expr: rate(pqc_scan_errors_total[5m]) / rate(pqc_scans_total[5m])
+        labels:
+          metric_type: "errors"
+
+  - name: pqc_migration_progress
+    interval: 300s  # 5 minutes
+    rules:
+      # Migration completion tracking
+      - record: pqc:migration_completion_percentage
+        expr: (sum(pqc_algorithms_migrated_total) / (sum(pqc_algorithms_migrated_total) + sum(pqc_vulnerabilities_found{severity=~"critical|high"}))) * 100
+        labels:
+          metric_type: "migration"
+          
+      - record: pqc:migration_velocity_per_day
+        expr: increase(pqc_algorithms_migrated_total[24h])
+        labels:
+          metric_type: "migration"
+          
+      # Compliance metrics
+      - record: pqc:compliance_score_nist
+        expr: pqc_compliance_score{framework="nist"}
+        labels:
+          metric_type: "compliance"
+          
+      - record: pqc:compliance_violations_rate_24h
+        expr: rate(pqc_compliance_violations_total[24h])
+        labels:
+          metric_type: "compliance"
+
+  - name: pqc_business_metrics
+    interval: 3600s  # 1 hour
+    rules:
+      # Business impact metrics
+      - record: pqc:repositories_scanned_total_24h
+        expr: increase(pqc_repositories_scanned_total[24h])
+        labels:
+          metric_type: "business"
+          
+      - record: pqc:critical_findings_resolution_time_p95
+        expr: histogram_quantile(0.95, pqc_vulnerability_resolution_time_bucket{severity="critical"})
+        labels:
+          metric_type: "business"
+          
+      - record: pqc:security_posture_improvement_rate
+        expr: rate(pqc_security_score_improvement_total[7d])
+        labels:
+          metric_type: "business"
+          
+      # Cost efficiency metrics
+      - record: pqc:scan_cost_per_repository
+        expr: pqc_infrastructure_cost_total / pqc_repositories_scanned_total
+        labels:
+          metric_type: "cost"
+          
+      - record: pqc:vulnerability_prevention_value
+        expr: pqc_prevented_security_incidents_total * pqc_incident_cost_estimate
+        labels:
+          metric_type: "value"
