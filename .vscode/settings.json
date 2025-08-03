@@ -1,57 +1,102 @@
 {
     "python.defaultInterpreterPath": "./venv/bin/python",
     "python.terminal.activateEnvironment": true,
-    "python.terminal.activateEnvInCurrentTerminal": true,
-    
-    // Code formatting
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": ["--line-length=88"],
-    "python.sortImports.args": ["--profile", "black"],
-    
-    // Linting configuration
     "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.linting.mypyEnabled": true,
     "python.linting.banditEnabled": true,
-    "python.linting.flake8Args": ["--max-line-length=88"],
-    
-    // Testing configuration
+    "python.formatting.provider": "black",
+    "python.formatting.blackPath": "./venv/bin/black",
+    "python.sortImports.path": "./venv/bin/isort",
+    "python.sortImports.args": ["--profile=black"],
     "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
     "python.testing.pytestArgs": [
-        "tests/",
+        "tests",
+        "--verbose",
         "--cov=src/pqc_migration_audit",
-        "--cov-report=html"
+        "--cov-report=html:htmlcov",
+        "--cov-report=term-missing"
     ],
-    
-    // Security-specific settings
-    "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.typeCheckingMode": "strict",
-    
-    // File associations for cryptography files
-    "files.associations": {
-        "*.pem": "plaintext",
-        "*.crt": "plaintext",
-        "*.key": "plaintext"
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.extraPaths": ["./src"],
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+        "source.fixAll.flake8": true
     },
-    
-    // Exclude patterns
+    "editor.rulers": [88, 120],
     "files.exclude": {
         "**/__pycache__": true,
         "**/*.pyc": true,
-        ".pytest_cache": true,
-        "htmlcov": true,
-        ".coverage": true,
-        "*.egg-info": true
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/htmlcov": true,
+        "**/.coverage": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/*.egg-info": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.venv": true,
+        "**/venv": true,
+        "**/node_modules": true
     },
-    
-    // Auto-save and formatting
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": true,
-    "editor.rulers": [88],
-    
-    // Security highlighting
-    "workbench.colorCustomizations": {
-        "editorError.foreground": "#ff0000",
-        "editorWarning.foreground": "#ff8800"
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/venv/**": true,
+        "**/__pycache__/**": true,
+        "**/.pytest_cache/**": true,
+        "**/.mypy_cache/**": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
+        "**/.venv": true,
+        "**/venv": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/htmlcov": true,
+        "**/dist": true,
+        "**/build": true
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.{yml,yaml}",
+        "https://json.schemastore.org/pre-commit-config.json": ".pre-commit-config.yaml",
+        "https://json.schemastore.org/dependabot-v2.json": ".github/dependabot.yml"
+    },
+    "json.schemas": [
+        {
+            "fileMatch": ["package.json"],
+            "url": "https://json.schemastore.org/package.json"
+        },
+        {
+            "fileMatch": ["pyproject.toml"],
+            "url": "https://json.schemastore.org/pyproject.json"
+        }
+    ],
+    "markdownlint.config": {
+        "MD013": false,
+        "MD033": false,
+        "MD041": false
+    },
+    "git.ignoreLimitWarning": true,
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+    },
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/src"
     }
 }
+EOF < /dev/null
