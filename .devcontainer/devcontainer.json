@@ -1,105 +1,59 @@
 {
-  "name": "PQC Migration Audit Development",
-  "dockerFile": "Dockerfile",
-  "context": "..",
-  
-  // Configure VS Code settings
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": false,
-        "python.linting.flake8Enabled": true,
-        "python.linting.mypyEnabled": true,
-        "python.formatting.provider": "black",
-        "python.sortImports.provider": "isort",
-        "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false,
-        "python.testing.pytestArgs": ["tests"],
-        "[python]": {
-          "editor.formatOnSave": true,
-          "editor.codeActionsOnSave": {
-            "source.organizeImports": true
-          }
-        },
-        "files.exclude": {
-          "**/__pycache__": true,
-          "**/*.pyc": true,
-          "**/.pytest_cache": true,
-          "**/.mypy_cache": true,
-          "**/.coverage": true,
-          "**/htmlcov": true
-        },
-        "terminal.integrated.shell.linux": "/bin/bash"
-      },
-      "extensions": [
-        "ms-python.python",
-        "ms-python.flake8",
-        "ms-python.black-formatter",
-        "ms-python.isort",
-        "ms-python.mypy-type-checker",
-        "charliermarsh.ruff",
-        "ms-python.pytest",
-        "ms-vscode.vscode-json",
-        "redhat.vscode-yaml",
-        "ms-azuretools.vscode-docker",
-        "github.vscode-github-actions",
-        "gruntfuggly.todo-tree",
-        "eamodio.gitlens",
-        "ms-vscode.makefile-tools",
-        "esbenp.prettier-vscode"
-      ]
-    }
-  },
-  
-  // Container configuration
-  "runArgs": [
-    "--name=pqc-audit-dev",
-    "--hostname=pqc-dev",
-    "--cap-add=SYS_PTRACE",
-    "--security-opt=seccomp=unconfined"
-  ],
-  
-  // Port forwarding for development services
-  "forwardPorts": [
-    8000,  // Application
-    3000,  // Grafana
-    9090,  // Prometheus
-    5432   // PostgreSQL (if used)
-  ],
-  
-  // Post-creation commands
-  "postCreateCommand": "pip install -e .[dev,test] && pre-commit install",
-  
-  // Development user configuration
-  "remoteUser": "pqcdev",
-  "updateRemoteUserUID": true,
-  
-  // Mount configuration
-  "mounts": [
-    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached",
-    "source=pqc-audit-vscode-extensions,target=/home/pqcdev/.vscode-server/extensions,type=volume",
-    "source=pqc-audit-cache,target=/home/pqcdev/.cache,type=volume"
-  ],
-  
-  // Environment variables
-  "containerEnv": {
-    "PYTHONPATH": "/workspace/src",
-    "PQC_AUDIT_DEV_MODE": "true",
-    "PQC_AUDIT_LOG_LEVEL": "DEBUG"
-  },
-  
-  // Features to install
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
-  },
-  
-  // Lifecycle scripts
-  "initializeCommand": "echo 'Initializing PQC Audit development environment...'",
-  "onCreateCommand": "chmod +x scripts/*.sh",
-  "updateContentCommand": "pip install -e .[dev,test] --upgrade",
-  "postStartCommand": "git config --global --add safe.directory /workspace"
+    "name": "PQC Migration Audit Development",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "postCreateCommand": "pip install -e .[dev,test,docs]",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "ms-python.flake8",
+                "ms-python.mypy-type-checker",
+                "ms-toolsai.jupyter",
+                "github.vscode-github-actions",
+                "redhat.vscode-yaml",
+                "ms-vscode.vscode-json",
+                "formulahendry.code-runner",
+                "ms-vscode.test-adapter-converter",
+                "ms-python.pytest"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.flake8Enabled": true,
+                "python.formatting.provider": "black",
+                "python.sortImports.args": ["--profile=black"],
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false,
+                "python.testing.pytestArgs": ["tests"],
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "files.exclude": {
+                    "**/__pycache__": true,
+                    "**/*.pyc": true,
+                    "**/node_modules": true,
+                    "**/.git": true,
+                    "**/.DS_Store": true,
+                    "**/Thumbs.db": true,
+                    "**/.pytest_cache": true,
+                    "**/.mypy_cache": true,
+                    "**/htmlcov": true
+                }
+            }
+        }
+    },
+    "forwardPorts": [8000, 8080, 3000],
+    "remoteUser": "vscode",
+    "mounts": [
+        "source=${localWorkspaceFolder}/.git,target=/workspaces/${localWorkspaceFolderBasename}/.git,type=bind,consistency=cached"
+    ],
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "shutdownAction": "stopContainer"
 }
