@@ -511,9 +511,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ```bibtex
 @software{pqc_migration_audit,
   title={PQC Migration Audit: Automated Post-Quantum Cryptography Transition},
-  author={Your Name},
+  author={Daniel Schmidt},
   year={2025},
-  url={https://github.com/yourusername/pqc-migration-audit}
+  url={https://github.com/danieleschmidt/pqc-migration-audit}
 }
 ```
 
