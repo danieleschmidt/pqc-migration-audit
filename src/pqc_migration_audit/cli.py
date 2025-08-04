@@ -3,6 +3,7 @@
 import click
 import json
 import sys
+import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
 from rich.console import Console
@@ -10,9 +11,18 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.text import Text
+import traceback
 
-from .core import CryptoAuditor, RiskAssessment, Severity
+from .core import CryptoAuditor, RiskAssessment
+from .types import Severity, CryptoAlgorithm
 from .reporters import JSONReporter, HTMLReporter, SARIFReporter, ConsoleReporter
+from .patch_generator import PQCPatchGenerator, PatchType
+from .dashboard import MigrationDashboard
+from .exceptions import (
+    PQCAuditException, ScanException, ValidationException, SecurityException,
+    FileSystemException, ScanTimeoutException, ExceptionHandler
+)
+from .validators import InputValidator
 
 
 console = Console()
@@ -21,8 +31,9 @@ console = Console()
 @click.group()
 @click.version_option(version="0.1.0")
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
+@click.option('--debug', is_flag=True, help='Enable debug logging')
 @click.pass_context
-def cli(ctx: click.Context, verbose: bool):
+def cli(ctx: click.Context, verbose: bool, debug: bool):
     """PQC Migration Audit - Post-Quantum Cryptography Vulnerability Scanner.
     
     Identify quantum-vulnerable cryptographic implementations and get 
@@ -30,6 +41,17 @@ def cli(ctx: click.Context, verbose: bool):
     """
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
+    ctx.obj['debug'] = debug
+    
+    # Configure logging
+    log_level = logging.DEBUG if debug else logging.INFO if verbose else logging.WARNING
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    if debug:
+        console.print("🐛 Debug mode enabled", style="yellow")
 
 
 @cli.command()
@@ -75,7 +97,7 @@ def scan(ctx: click.Context, path: Path, output: Optional[Path],
     if verbose or output_format == 'console':
         console.print(f"\n🔍 Scanning {path} for quantum-vulnerable cryptography...\n")
     
-    # Perform scan with progress indicator
+    # Perform scan with enhanced error handling
     try:
         if output_format == 'console':
             with Progress(
@@ -88,9 +110,59 @@ def scan(ctx: click.Context, path: Path, output: Optional[Path],
                 progress.update(task, description="Scan complete!")
         else:
             results = auditor.scan_directory(str(path), **scan_options)
-            
+    
+    except ValidationException as e:
+        console.print(f"❌ Input validation error: {e.message}", style="red")
+        if verbose:
+            console.print(f"Error code: {e.error_code}", style="dim")
+            if e.details:
+                console.print(f"Details: {e.details}", style="dim")
+        sys.exit(1)
+    
+    except SecurityException as e:
+        console.print(f"🚨 Security error: {e.message}", style="red bold")
+        if verbose:
+            console.print(f"Error code: {e.error_code}", style="dim")
+        sys.exit(1)
+    
+    except FileSystemException as e:
+        console.print(f"📁 File system error: {e.message}", style="red")
+        if verbose:
+            console.print(f"Error code: {e.error_code}", style="dim")
+        sys.exit(1)
+    
+    except ScanTimeoutException as e:
+        console.print(f"⏰ Scan timeout: {e.message}", style="yellow")
+        console.print("Consider using --exclude patterns to reduce scan scope", style="yellow")
+        if verbose:
+            console.print(f"Files processed: {e.details.get('files_processed', 0)}", style="dim")
+        sys.exit(1)
+    
+    except ScanException as e:
+        console.print(f"❌ Scan error: {e.message}", style="red")
+        if verbose:
+            console.print(f"Error code: {e.error_code}", style="dim")
+            if e.details:
+                console.print(f"Details: {e.details}", style="dim")
+        sys.exit(1)
+    
+    except PQCAuditException as e:
+        console.print(f"❌ PQC Audit error: {e.message}", style="red")
+        if verbose:
+            console.print(f"Error type: {type(e).__name__}", style="dim")
+            console.print(f"Error code: {e.error_code}", style="dim")
+        sys.exit(1)
+    
+    except KeyboardInterrupt:
+        console.print("\n⚠️  Scan interrupted by user", style="yellow")
+        sys.exit(130)  # Standard exit code for Ctrl+C
+    
     except Exception as e:
-        console.print(f"❌ Error during scan: {e}", style="red")
+        console.print(f"❌ Unexpected error: {str(e)}", style="red")
+        if verbose or ctx.obj.get('debug'):
+            console.print("\nFull traceback:", style="dim")
+            console.print(traceback.format_exc(), style="dim")
+        console.print("\nPlease report this issue at: https://github.com/danieleschmidt/pqc-migration-audit/issues", style="blue")
         sys.exit(1)
     
     # Filter results by severity threshold
@@ -177,67 +249,282 @@ def progress(ctx: click.Context, path: Path, baseline: Optional[Path],
 
 
 @cli.command()
-@click.argument('scan_results', type=click.Path(exists=True, path_type=Path))
+@click.argument('path', type=click.Path(exists=True, path_type=Path))
 @click.option('--output', '-o', type=click.Path(path_type=Path),
               help='Output file for dashboard')
+@click.option('--historical-data', type=click.Path(exists=True, path_type=Path),
+              help='Path to historical scan data for trend analysis')
 @click.pass_context
-def dashboard(ctx: click.Context, scan_results: Path, output: Optional[Path]):
-    """Generate interactive dashboard from scan results."""
+def dashboard(ctx: click.Context, path: Path, output: Optional[Path], 
+             historical_data: Optional[Path]):
+    """Generate interactive dashboard from current scan."""
     
-    try:
-        with open(scan_results, 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        console.print(f"❌ Error loading scan results: {e}", style="red")
-        sys.exit(1)
+    # Perform fresh scan for dashboard
+    auditor = CryptoAuditor()
+    scan_results = auditor.scan_directory(str(path))
     
-    # Generate dashboard HTML
-    dashboard_html = _generate_dashboard_html(data)
+    # Load historical data if provided
+    historical_data_list = None
+    if historical_data:
+        try:
+            with open(historical_data, 'r') as f:
+                historical_data_list = json.load(f)
+        except Exception as e:
+            console.print(f"⚠️  Warning: Could not load historical data: {e}", style="yellow")
     
-    output_file = output or Path("pqc-dashboard.html")
-    with open(output_file, 'w') as f:
-        f.write(dashboard_html)
+    # Generate migration plan
+    migration_plan = auditor.create_migration_plan(scan_results)
     
-    console.print(f"✅ Dashboard generated: {output_file}")
+    # Generate dashboard
+    dashboard_generator = MigrationDashboard()
+    output_file = output or Path("pqc-migration-dashboard.html")
+    
+    dashboard_html = dashboard_generator.generate_dashboard(
+        scan_results, 
+        historical_data_list, 
+        migration_plan, 
+        output_file
+    )
+    
+    console.print(f"✅ Interactive dashboard generated: {output_file}")
     console.print(f"🌐 Open in browser: file://{output_file.absolute()}")
+    console.print(f"📊 Dashboard includes: risk metrics, timeline, migration plan, and progress tracking")
 
 
 @cli.command()
-@click.argument('vulnerability_file', type=click.Path(exists=True, path_type=Path))
+@click.argument('path', type=click.Path(exists=True, path_type=Path))
 @click.option('--output-dir', '-o', type=click.Path(path_type=Path),
               default=Path("patches"), help='Output directory for patches')
 @click.option('--language', '-l', 
-              type=click.Choice(['python', 'java', 'go', 'javascript']),
+              type=click.Choice(['python', 'java', 'go', 'javascript', 'c', 'cpp']),
               help='Target language for patches')
+@click.option('--patch-type', '-t',
+              type=click.Choice(['replace_rsa', 'replace_ecc', 'replace_dsa', 'hybrid_mode']),
+              help='Type of patch to generate')
+@click.option('--migration-guide', is_flag=True,
+              help='Generate comprehensive migration guide')
 @click.pass_context
-def patch(ctx: click.Context, vulnerability_file: Path, output_dir: Path,
-          language: Optional[str]):
-    """Generate migration patches for vulnerabilities."""
+def patch(ctx: click.Context, path: Path, output_dir: Path,
+          language: Optional[str], patch_type: Optional[str], migration_guide: bool):
+    """Generate PQC migration patches and guides."""
     
-    try:
-        with open(vulnerability_file, 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        console.print(f"❌ Error loading vulnerability file: {e}", style="red")
-        sys.exit(1)
+    # Perform scan to get vulnerabilities
+    auditor = CryptoAuditor()
+    scan_results = auditor.scan_directory(str(path))
+    
+    if not scan_results.vulnerabilities:
+        console.print("✅ No vulnerabilities found - no patches needed!", style="green")
+        return
     
     # Create output directory
     output_dir.mkdir(exist_ok=True)
     
+    # Initialize patch generator
+    patch_generator = PQCPatchGenerator()
+    
+    # Filter vulnerabilities by language if specified
+    vulnerabilities = scan_results.vulnerabilities
+    if language:
+        vulnerabilities = [
+            v for v in vulnerabilities 
+            if patch_generator._detect_language(v.file_path) == language
+        ]
+    
     # Generate patches
     patches_generated = 0
-    for vuln in data.get('vulnerabilities', []):
-        if language and _detect_language_from_file(vuln['file_path']) != language:
-            continue
-            
-        patch_content = _generate_patch(vuln)
+    patch_type_enum = None
+    if patch_type:
+        patch_type_enum = PatchType(patch_type)
+    
+    console.print(f"\n🔧 Generating patches for {len(vulnerabilities)} vulnerabilities...")
+    
+    for i, vuln in enumerate(vulnerabilities):
+        patch_content = patch_generator.generate_patch(vuln, patch_type_enum, language)
         if patch_content:
-            patch_file = output_dir / f"patch_{patches_generated + 1}.patch"
-            with open(patch_file, 'w') as f:
+            # Create descriptive filename
+            safe_filename = vuln.file_path.replace('/', '_').replace('\\', '_')
+            patch_file = output_dir / f"{safe_filename}_line_{vuln.line_number}_{vuln.algorithm.value.lower()}.patch"
+            
+            with open(patch_file, 'w', encoding='utf-8') as f:
                 f.write(patch_content)
             patches_generated += 1
+            
+            if ctx.obj.get('verbose'):
+                console.print(f"  Generated: {patch_file.name}")
     
-    console.print(f"✅ Generated {patches_generated} patches in {output_dir}")
+    # Generate comprehensive migration guide
+    if migration_guide or patches_generated > 5:  # Auto-generate for large codebases
+        guide_content = patch_generator.generate_migration_guide(vulnerabilities)
+        guide_file = output_dir / "PQC_Migration_Guide.md"
+        
+        with open(guide_file, 'w', encoding='utf-8') as f:
+            f.write(guide_content)
+        
+        console.print(f"📖 Comprehensive migration guide: {guide_file}")
+    
+    console.print(f"\n✅ Generated {patches_generated} patches in {output_dir}")
+    console.print(f"🎯 Patch types: Individual vulnerability fixes and implementation examples")
+    console.print(f"📚 Review patches carefully and test in development environment before applying")
+
+
+@cli.command()
+@click.argument('path', type=click.Path(exists=True, path_type=Path))
+@click.option('--output', '-o', type=click.Path(path_type=Path),
+              help='Output file for comprehensive analysis')
+@click.option('--include-patches', is_flag=True,
+              help='Include patch generation in analysis')
+@click.option('--include-dashboard', is_flag=True,
+              help='Generate interactive dashboard')
+@click.pass_context
+def analyze(ctx: click.Context, path: Path, output: Optional[Path],
+           include_patches: bool, include_dashboard: bool):
+    """Comprehensive PQC security analysis with all features."""
+    
+    verbose = ctx.obj.get('verbose', False)
+    
+    console.print("\n🔍 Starting Comprehensive PQC Security Analysis...\n", style="bold blue")
+    
+    # Step 1: Core vulnerability scan
+    console.print("📊 Phase 1: Vulnerability Detection")
+    auditor = CryptoAuditor()
+    scan_results = auditor.scan_directory(str(path))
+    
+    if verbose:
+        console.print(f"   • Scanned {scan_results.scanned_files} files")
+        console.print(f"   • Analyzed {scan_results.total_lines:,} lines of code")
+        console.print(f"   • Found {len(scan_results.vulnerabilities)} vulnerabilities")
+    
+    # Step 2: Risk assessment
+    console.print("⚠️  Phase 2: Risk Assessment")
+    risk_assessment = RiskAssessment(scan_results)
+    hndl_risk = risk_assessment.calculate_harvest_now_decrypt_later_risk()
+    migration_hours = risk_assessment.migration_hours
+    
+    console.print(f"   • HNDL Risk Score: {hndl_risk}/100")
+    console.print(f"   • Migration Effort: {migration_hours} hours")
+    console.print(f"   • Risk Level: {risk_assessment._get_risk_level(hndl_risk)}")
+    
+    # Step 3: Migration planning
+    console.print("📋 Phase 3: Migration Planning")
+    migration_plan = auditor.create_migration_plan(scan_results)
+    
+    console.print(f"   • Critical items: {migration_plan['summary']['critical']}")
+    console.print(f"   • High priority: {migration_plan['summary']['high']}")
+    console.print(f"   • Migration phases: {len(migration_plan['migration_phases'])}")
+    
+    # Step 4: Generate patches if requested
+    if include_patches and scan_results.vulnerabilities:
+        console.print("🔧 Phase 4: Patch Generation")
+        patch_generator = PQCPatchGenerator()
+        
+        patches_dir = Path("pqc_patches")
+        patches_dir.mkdir(exist_ok=True)
+        
+        patches_generated = 0
+        for vuln in scan_results.vulnerabilities[:10]:  # Limit to first 10 for demo
+            patch_content = patch_generator.generate_patch(vuln)
+            if patch_content:
+                safe_filename = vuln.file_path.replace('/', '_').replace('\\', '_')
+                patch_file = patches_dir / f"{safe_filename}_line_{vuln.line_number}.patch"
+                
+                with open(patch_file, 'w', encoding='utf-8') as f:
+                    f.write(patch_content)
+                patches_generated += 1
+        
+        # Generate migration guide
+        guide_content = patch_generator.generate_migration_guide(scan_results.vulnerabilities)
+        guide_file = patches_dir / "Migration_Guide.md"
+        with open(guide_file, 'w', encoding='utf-8') as f:
+            f.write(guide_content)
+        
+        console.print(f"   • Generated {patches_generated} patches")
+        console.print(f"   • Created migration guide: {guide_file}")
+    
+    # Step 5: Generate dashboard if requested
+    if include_dashboard:
+        console.print("📊 Phase 5: Interactive Dashboard")
+        dashboard_generator = MigrationDashboard()
+        dashboard_file = Path("pqc_analysis_dashboard.html")
+        
+        dashboard_generator.generate_dashboard(
+            scan_results, 
+            None,  # No historical data for now
+            migration_plan, 
+            dashboard_file
+        )
+        
+        console.print(f"   • Dashboard created: {dashboard_file}")
+        console.print(f"   • Open in browser: file://{dashboard_file.absolute()}")
+    
+    # Step 6: Generate comprehensive report
+    console.print("📄 Phase 6: Report Generation")
+    output_file = output or Path("pqc_comprehensive_analysis.json")
+    
+    comprehensive_report = {
+        "analysis_metadata": {
+            "scan_path": str(path),
+            "timestamp": scan_results.timestamp,
+            "analysis_type": "comprehensive",
+            "tool_version": "0.1.0"
+        },
+        "scan_results": {
+            "files_scanned": scan_results.scanned_files,
+            "lines_analyzed": scan_results.total_lines,
+            "languages_detected": scan_results.languages_detected,
+            "scan_duration": scan_results.scan_time
+        },
+        "vulnerability_summary": {
+            "total_vulnerabilities": len(scan_results.vulnerabilities),
+            "by_severity": {
+                "critical": len([v for v in scan_results.vulnerabilities if v.severity == Severity.CRITICAL]),
+                "high": len([v for v in scan_results.vulnerabilities if v.severity == Severity.HIGH]),
+                "medium": len([v for v in scan_results.vulnerabilities if v.severity == Severity.MEDIUM]),
+                "low": len([v for v in scan_results.vulnerabilities if v.severity == Severity.LOW])
+            },
+            "by_algorithm": {
+                algo.value: len([v for v in scan_results.vulnerabilities if v.algorithm == algo])
+                for algo in CryptoAlgorithm
+            }
+        },
+        "risk_assessment": {
+            "hndl_risk_score": hndl_risk,
+            "risk_level": risk_assessment._get_risk_level(hndl_risk),
+            "migration_effort_hours": migration_hours,
+            "estimated_cost_usd": migration_hours * 150
+        },
+        "migration_plan": migration_plan,
+        "recommendations": risk_assessment._generate_recommendations(hndl_risk),
+        "vulnerabilities": [
+            {
+                "file_path": vuln.file_path,
+                "line_number": vuln.line_number,
+                "algorithm": vuln.algorithm.value,
+                "severity": vuln.severity.value,
+                "description": vuln.description,
+                "recommendation": vuln.recommendation,
+                "cwe_id": vuln.cwe_id
+            }
+            for vuln in scan_results.vulnerabilities
+        ]
+    }
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(comprehensive_report, f, indent=2)
+    
+    console.print(f"   • Comprehensive report: {output_file}")
+    
+    # Summary
+    console.print("\n✅ Analysis Complete!", style="bold green")
+    console.print(f"📊 Found {len(scan_results.vulnerabilities)} vulnerabilities across {scan_results.scanned_files} files")
+    console.print(f"⚠️  Risk Level: {risk_assessment._get_risk_level(hndl_risk)}")
+    console.print(f"⏱️  Estimated Migration: {migration_hours} hours")
+    
+    if hndl_risk >= 80:
+        console.print("🚨 URGENT: High risk score indicates immediate action required!", style="red bold")
+    elif hndl_risk >= 40:
+        console.print("⚠️  MODERATE: Plan migration within next 18 months", style="yellow bold")
+    else:
+        console.print("✅ LOW: Develop migration plan for 2027 deadline", style="green")
 
 
 def _load_config(config_path: Path) -> Dict[str, Any]:
@@ -308,63 +595,6 @@ def _display_progress_report(report: Dict[str, Any]):
     console.print(Panel(progress_text, title="Summary"))
 
 
-def _generate_dashboard_html(data: Dict[str, Any]) -> str:
-    """Generate HTML dashboard from scan data."""
-    # Simple dashboard template
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>PQC Migration Dashboard</title>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 20px; }}
-            .metric {{ display: inline-block; margin: 10px; padding: 20px; border: 1px solid #ddd; }}
-            .critical {{ background-color: #ffebee; }}
-            .high {{ background-color: #fff3e0; }}
-            .medium {{ background-color: #f3e5f5; }}
-            .low {{ background-color: #e8f5e8; }}
-        </style>
-    </head>
-    <body>
-        <h1>🔐 PQC Migration Dashboard</h1>
-        
-        <div class="metrics">
-            <div class="metric critical">
-                <h3>Critical</h3>
-                <p>{data.get('critical_count', 0)}</p>
-            </div>
-            <div class="metric high">
-                <h3>High</h3>
-                <p>{data.get('high_count', 0)}</p>
-            </div>
-            <div class="metric medium">
-                <h3>Medium</h3>
-                <p>{data.get('medium_count', 0)}</p>
-            </div>
-            <div class="metric low">
-                <h3>Low</h3>
-                <p>{data.get('low_count', 0)}</p>
-            </div>
-        </div>
-        
-        <div id="riskChart" style="width:100%;height:400px;"></div>
-        
-        <script>
-            // Add interactive charts here
-            var riskData = {{
-                x: ['RSA', 'ECC', 'DSA'],
-                y: [10, 8, 5],
-                type: 'bar'
-            }};
-            
-            Plotly.newPlot('riskChart', [riskData], {{
-                title: 'Vulnerabilities by Algorithm'
-            }});
-        </script>
-    </body>
-    </html>
-    """
 
 
 def _detect_language_from_file(file_path: str) -> str:
@@ -380,34 +610,6 @@ def _detect_language_from_file(file_path: str) -> str:
     return ext_map.get(ext, 'unknown')
 
 
-def _generate_patch(vulnerability: Dict[str, Any]) -> str:
-    """Generate a patch for a vulnerability."""
-    # Simple patch generation example
-    language = _detect_language_from_file(vulnerability['file_path'])
-    algorithm = vulnerability['algorithm']
-    
-    if language == 'python' and algorithm == 'RSA':
-        return f"""
-# Patch for {vulnerability['file_path']}:{vulnerability['line_number']}
-# Replace RSA with ML-KEM (Kyber) for key exchange
-
-# Before (quantum-vulnerable):
-# {vulnerability['code_snippet']}
-
-# After (post-quantum secure):
-from pqc_migration.crypto import ML_KEM_768
-
-# Generate PQC keypair
-private_key, public_key = ML_KEM_768.generate_keypair()
-
-# Encapsulation (equivalent to RSA encryption)
-ciphertext, shared_secret = ML_KEM_768.encapsulate(public_key)
-
-# Decapsulation (equivalent to RSA decryption)  
-shared_secret = ML_KEM_768.decapsulate(private_key, ciphertext)
-"""
-    
-    return None
 
 
 def main():
