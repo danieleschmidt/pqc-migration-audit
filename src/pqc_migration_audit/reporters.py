@@ -9,7 +9,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
-from .core import ScanResults, Vulnerability, Severity, CryptoAlgorithm
+from .types import ScanResults, Vulnerability, Severity, CryptoAlgorithm
 
 
 class BaseReporter(ABC):

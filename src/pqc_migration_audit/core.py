@@ -4,55 +4,22 @@ import os
 import re
 import ast
 import time
+import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, NamedTuple
 from dataclasses import dataclass, field
 from enum import Enum
 import json
+from contextlib import contextmanager
 
+from .types import Severity, CryptoAlgorithm, Vulnerability, ScanResults
+from .exceptions import (
+    ScanException, ValidationException, SecurityException, FileSystemException,
+    UnsupportedFileTypeException, FileTooLargeException, InsufficientPermissionsException,
+    ScanTimeoutException, ExceptionHandler
+)
 
-class Severity(Enum):
-    """Vulnerability severity levels."""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-class CryptoAlgorithm(Enum):
-    """Quantum-vulnerable cryptographic algorithms."""
-    RSA = "RSA"
-    ECC = "ECC"
-    DSA = "DSA"
-    DH = "Diffie-Hellman"
-    ECDSA = "ECDSA"
-    ECDH = "ECDH"
-
-
-@dataclass
-class Vulnerability:
-    """Represents a quantum-vulnerable cryptographic finding."""
-    file_path: str
-    line_number: int
-    algorithm: CryptoAlgorithm
-    severity: Severity
-    key_size: Optional[int] = None
-    description: str = ""
-    code_snippet: str = ""
-    recommendation: str = ""
-    cwe_id: Optional[str] = None
-
-
-@dataclass
-class ScanResults:
-    """Results from a cryptographic audit scan."""
-    vulnerabilities: List[Vulnerability] = field(default_factory=list)
-    scanned_files: int = 0
-    total_lines: int = 0
-    scan_time: float = 0.0
-    scan_path: str = ""
-    timestamp: str = ""
-    languages_detected: List[str] = field(default_factory=list)
+# Import performance optimizations (lazy loading to avoid circular imports)
 
 
 class CryptoPatterns:
@@ -63,23 +30,44 @@ class CryptoPatterns:
             r'rsa\.generate_private_key\s*\(',
             r'RSA\.generate\s*\(',
             r'Crypto\.PublicKey\.RSA\.generate\s*\(',
+            r'RSA\.importKey\s*\(',
+            r'from\s+Crypto\.PublicKey\s+import\s+RSA',
+            r'from\s+cryptography\.hazmat\.primitives\.asymmetric\s+import\s+rsa',
         ],
         'ecc_generation': [
             r'ec\.generate_private_key\s*\(',
             r'ECC\.generate\s*\(',
             r'ecdsa\.SigningKey\.generate\s*\(',
+            r'from\s+cryptography\.hazmat\.primitives\.asymmetric\s+import\s+ec',
+            r'from\s+ecdsa\s+import\s+SigningKey',
+            r'SECP256R1\s*\(',
+            r'SECP384R1\s*\(',
+            r'SECP521R1\s*\(',
         ],
         'dsa_generation': [
             r'dsa\.generate_private_key\s*\(',
             r'DSA\.generate\s*\(',
+            r'from\s+cryptography\.hazmat\.primitives\.asymmetric\s+import\s+dsa',
         ],
         'diffie_hellman': [
             r'dh\.generate_private_key\s*\(',
             r'DiffieHellman\s*\(',
+            r'from\s+cryptography\.hazmat\.primitives\.asymmetric\s+import\s+dh',
         ],
         'weak_key_sizes': [
             r'key_size\s*=\s*(512|1024)\b',
             r'bits\s*=\s*(512|1024)\b',
+        ],
+        'legacy_ssl_tls': [
+            r'ssl\.PROTOCOL_TLSv1\b',
+            r'ssl\.PROTOCOL_SSLv\d',
+            r'TLSVersion\.TLSv1\b',
+            r'context\.minimum_version\s*=\s*ssl\.TLSVersion\.TLSv1',
+        ],
+        'pki_certificates': [
+            r'x509\.CertificateBuilder\s*\(',
+            r'RSAPrivateKey\s*\(',
+            r'ECPrivateKey\s*\(',
         ]
     }
     
@@ -87,13 +75,23 @@ class CryptoPatterns:
         'rsa_generation': [
             r'KeyPairGenerator\.getInstance\s*\(\s*["\']RSA["\']',
             r'RSAKeyGenParameterSpec\s*\(',
+            r'Cipher\.getInstance\s*\(\s*["\']RSA',
+            r'import\s+java\.security\.interfaces\.RSA',
         ],
         'ecc_generation': [
             r'KeyPairGenerator\.getInstance\s*\(\s*["\']EC["\']',
             r'ECGenParameterSpec\s*\(',
+            r'Signature\.getInstance\s*\(\s*["\'].*ECDSA',
+            r'import\s+java\.security\.interfaces\.EC',
         ],
         'dsa_generation': [
             r'KeyPairGenerator\.getInstance\s*\(\s*["\']DSA["\']',
+            r'Signature\.getInstance\s*\(\s*["\'].*DSA',
+        ],
+        'legacy_tls': [
+            r'TLSv1\b',
+            r'SSLv\d',
+            r'setEnabledProtocols.*TLSv1',
         ]
     }
     
@@ -101,9 +99,60 @@ class CryptoPatterns:
         'rsa_generation': [
             r'rsa\.GenerateKey\s*\(',
             r'rsa\.GenerateMultiPrimeKey\s*\(',
+            r'crypto/rsa',
+            r'rsa\.PrivateKey',
         ],
         'ecdsa_generation': [
             r'ecdsa\.GenerateKey\s*\(',
+            r'crypto/ecdsa',
+            r'elliptic\.P256\(\)',
+            r'elliptic\.P384\(\)',
+            r'elliptic\.P521\(\)',
+        ],
+        'legacy_tls': [
+            r'tls\.VersionTLS10',
+            r'tls\.VersionTLS11',
+            r'tls\.VersionSSL30',
+        ]
+    }
+    
+    JAVASCRIPT_PATTERNS = {
+        'rsa_generation': [
+            r'crypto\.generateKeyPair\s*\(\s*["\']rsa["\']',
+            r'RSA_PKCS1_PADDING',
+            r'node-rsa',
+            r'jsrsasign',
+        ],
+        'ecc_generation': [
+            r'crypto\.generateKeyPair\s*\(\s*["\']ec["\']',
+            r'secp256r1',
+            r'secp384r1',
+            r'secp521r1',
+            r'elliptic',
+        ],
+        'legacy_crypto': [
+            r'crypto\.createHash\s*\(\s*["\']md5["\']',
+            r'crypto\.createHash\s*\(\s*["\']sha1["\']',
+        ]
+    }
+    
+    C_CPP_PATTERNS = {
+        'openssl_rsa': [
+            r'RSA_generate_key\s*\(',
+            r'RSA_generate_key_ex\s*\(',
+            r'EVP_PKEY_RSA',
+            r'#include\s*<openssl/rsa\.h>',
+        ],
+        'openssl_ecc': [
+            r'EC_KEY_generate_key\s*\(',
+            r'EVP_PKEY_EC',
+            r'#include\s*<openssl/ec\.h>',
+            r'EC_GROUP_new_by_curve_name',
+        ],
+        'legacy_functions': [
+            r'MD5\s*\(',
+            r'SHA1\s*\(',
+            r'DES_\w+',
         ]
     }
 
@@ -118,19 +167,57 @@ class CryptoAuditor:
             config: Configuration options for the auditor
         """
         self.config = config or {}
+        self.logger = logging.getLogger(__name__)
+        
+        # Initialize validators (lazy loading to avoid circular imports)
+        self._input_validator = None
+        self._security_validator = None
+        self._integrity_validator = None
+        
+        # Scan settings with defaults
+        self.max_scan_time = self.config.get('max_scan_time_seconds', 3600)  # 1 hour default
+        self.max_files_per_scan = self.config.get('max_files_per_scan', 10000)
+        self.enable_security_validation = self.config.get('enable_security_validation', True)
+        self.enable_performance_optimization = self.config.get('enable_performance_optimization', True)
+        
+        # Performance components (lazy loading)
+        self._adaptive_scanner = None
+        self.performance_metrics = None
+        
         self.supported_extensions = {
             '.py': 'python',
             '.java': 'java',
             '.go': 'go',
             '.js': 'javascript',
             '.ts': 'typescript',
+            '.jsx': 'javascript',
+            '.tsx': 'typescript',
             '.c': 'c',
             '.cpp': 'cpp',
+            '.cc': 'cpp',
+            '.cxx': 'cpp',
             '.h': 'c',
-            '.hpp': 'cpp'
+            '.hpp': 'cpp',
+            '.hxx': 'cpp',
+            '.cs': 'csharp',
+            '.php': 'php',
+            '.rb': 'ruby',
+            '.rs': 'rust',
+            '.kt': 'kotlin',
+            '.swift': 'swift'
         }
         self.patterns = CryptoPatterns()
+        
+        # Statistics tracking
+        self.stats = {
+            'files_processed': 0,
+            'files_skipped': 0,
+            'errors_encountered': 0,
+            'scan_start_time': None,
+            'vulnerabilities_found': 0
+        }
 
+    @ExceptionHandler.handle_scan_exception
     def scan_directory(self, path: str, **kwargs) -> ScanResults:
         """Scan a directory for quantum-vulnerable cryptography.
         
@@ -140,42 +227,169 @@ class CryptoAuditor:
             
         Returns:
             ScanResults containing vulnerabilities and metadata
+            
+        Raises:
+            ScanException: If scanning fails
+            ValidationException: If path validation fails
+            SecurityException: If security validation fails
         """
+        # Initialize statistics
+        self.stats = {
+            'files_processed': 0,
+            'files_skipped': 0,
+            'errors_encountered': 0,
+            'scan_start_time': time.time(),
+            'vulnerabilities_found': 0
+        }
+        
         start_time = time.time()
+        
+        # Validate input path
+        if self._input_validator is None:
+            from .validators import InputValidator
+            self._input_validator = InputValidator()
+        validation_result = self._input_validator.validate_scan_path(path)
+        if not validation_result.is_valid:
+            raise ValidationException(
+                f"Path validation failed: {validation_result.error_message}",
+                error_code="INVALID_SCAN_PATH"
+            )
+        
+        # Log warnings from validation
+        for warning in validation_result.warnings:
+            self.logger.warning(f"Path validation warning: {warning}")
+        
         results = ScanResults(
             scan_path=path,
             timestamp=time.strftime('%Y-%m-%d %H:%M:%S')
         )
         
-        path_obj = Path(path)
+        path_obj = Path(path).resolve()
         if not path_obj.exists():
-            raise FileNotFoundError(f"Path does not exist: {path}")
+            raise FileSystemException(f"Path does not exist: {path_obj}", error_code="PATH_NOT_FOUND")
         
-        exclude_patterns = kwargs.get('exclude_patterns', [
-            '*/node_modules/*', '*/venv/*', '*/build/*', '*/dist/*',
-            '*/.git/*', '*/tests/*', '*/test/*'
-        ])
+        if not os.access(path_obj, os.R_OK):
+            raise InsufficientPermissionsException(str(path_obj), "read")
         
-        languages_found = set()
-        
-        for file_path in self._find_source_files(path_obj, exclude_patterns):
-            language = self._detect_language(file_path)
-            if language:
-                languages_found.add(language)
-                file_vulnerabilities = self._scan_file(file_path, language)
-                results.vulnerabilities.extend(file_vulnerabilities)
-                results.scanned_files += 1
+        try:
+            exclude_patterns = kwargs.get('exclude_patterns', [
+                '*/node_modules/*', '*/venv/*', '*/build/*', '*/dist/*',
+                '*/.git/*', '*/tests/*', '*/test/*'
+            ])
+            
+            # Get timeout from config or kwargs
+            timeout_seconds = kwargs.get('timeout', self.max_scan_time)
+            
+            languages_found = set()
+            
+            # Find source files with error handling
+            try:
+                source_files = self._find_source_files(path_obj, exclude_patterns)
+            except Exception as e:
+                raise ScanException(
+                    f"Failed to enumerate source files: {str(e)}",
+                    error_code="FILE_ENUMERATION_FAILED"
+                )
+            
+            # Check if we have too many files
+            if len(source_files) > self.max_files_per_scan:
+                self.logger.warning(
+                    f"Large scan detected: {len(source_files)} files (limit: {self.max_files_per_scan})"
+                )
+                source_files = source_files[:self.max_files_per_scan]
+            
+            # Scan files with timeout protection
+            with self._timeout_context(timeout_seconds):
+                for file_path in source_files:
+                    try:
+                        # Check timeout periodically
+                        if time.time() - start_time > timeout_seconds:
+                            raise ScanTimeoutException(timeout_seconds, self.stats['files_processed'])
+                        
+                        # Validate file before scanning
+                        if self._input_validator is None:
+                            from .validators import InputValidator
+                            self._input_validator = InputValidator()
+                        file_validation = self._input_validator.validate_file_for_scanning(file_path)
+                        if not file_validation.is_valid:
+                            self.logger.warning(f"Skipping file: {file_validation.error_message}")
+                            self.stats['files_skipped'] += 1
+                            continue
+                        
+                        # Log file validation warnings
+                        for warning in file_validation.warnings:
+                            self.logger.warning(f"File warning: {warning}")
+                        
+                        language = self._detect_language(file_path)
+                        if language:
+                            languages_found.add(language)
+                            file_vulnerabilities = self._scan_file_safely(file_path, language)
+                            results.vulnerabilities.extend(file_vulnerabilities)
+                            self.stats['vulnerabilities_found'] += len(file_vulnerabilities)
+                            results.scanned_files += 1
+                            self.stats['files_processed'] += 1
+                            
+                            # Count lines safely
+                            try:
+                                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                    results.total_lines += sum(1 for _ in f)
+                            except Exception as e:
+                                self.logger.warning(f"Could not count lines in {file_path}: {e}")
+                        else:
+                            self.stats['files_skipped'] += 1
+                            
+                    except Exception as e:
+                        self.stats['errors_encountered'] += 1
+                        self.logger.error(f"Error scanning file {file_path}: {str(e)}")
+                        
+                        # Don't fail entire scan for individual file errors
+                        if self.stats['errors_encountered'] > 100:  # Reasonable error threshold
+                            raise ScanException(
+                                f"Too many file scan errors ({self.stats['errors_encountered']})",
+                                error_code="EXCESSIVE_SCAN_ERRORS"
+                            )
+            
+            results.languages_detected = list(languages_found)
+            results.scan_time = time.time() - start_time
+            
+            # Validate scan results if security validation enabled
+            if self.enable_security_validation:
+                if self._security_validator is None:
+                    from .validators import SecurityValidator
+                    self._security_validator = SecurityValidator()
+                security_validation = self._security_validator.validate_scan_results(results)
+                if not security_validation.is_valid:
+                    raise SecurityException(
+                        f"Security validation failed: {security_validation.error_message}",
+                        error_code="SECURITY_VALIDATION_FAILED"
+                    )
                 
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    results.total_lines += len(f.readlines())
-        
-        results.languages_detected = list(languages_found)
-        results.scan_time = time.time() - start_time
-        
-        return results
+                # Log security warnings
+                for warning in security_validation.warnings:
+                    self.logger.warning(f"Security warning: {warning}")
+            
+            # Log scan statistics
+            self.logger.info(
+                f"Scan completed: {self.stats['files_processed']} files processed, "
+                f"{self.stats['files_skipped']} skipped, {self.stats['errors_encountered']} errors, "
+                f"{self.stats['vulnerabilities_found']} vulnerabilities found"
+            )
+            
+            return results
+            
+        except (ScanException, ValidationException, SecurityException):
+            # Re-raise our custom exceptions
+            raise
+        except Exception as e:
+            # Wrap unexpected exceptions
+            raise ScanException(
+                f"Unexpected error during scan: {str(e)}",
+                error_code="UNEXPECTED_SCAN_ERROR",
+                details={"scan_stats": self.stats}
+            )
 
     def _find_source_files(self, path: Path, exclude_patterns: List[str]) -> List[Path]:
-        """Find source code files to scan.
+        """Find source code files to scan with robust error handling.
         
         Args:
             path: Directory path to search
@@ -183,18 +397,88 @@ class CryptoAuditor:
             
         Returns:
             List of source file paths
+            
+        Raises:
+            FileSystemException: If file system operations fail
         """
         files = []
         
-        if path.is_file():
-            if self._should_scan_file(path, exclude_patterns):
-                files.append(path)
-        else:
-            for file_path in path.rglob('*'):
-                if file_path.is_file() and self._should_scan_file(file_path, exclude_patterns):
-                    files.append(file_path)
+        try:
+            if path.is_file():
+                if self._should_scan_file(path, exclude_patterns):
+                    files.append(path)
+            else:
+                # Use iterative approach for large directories to avoid recursion limits
+                directories_to_process = [path]
+                files_processed = 0
+                
+                while directories_to_process:
+                    current_dir = directories_to_process.pop(0)
+                    
+                    try:
+                        # Check directory permissions
+                        if not os.access(current_dir, os.R_OK):
+                            self.logger.warning(f"Skipping unreadable directory: {current_dir}")
+                            continue
+                        
+                        # Process directory contents
+                        for item in current_dir.iterdir():
+                            files_processed += 1
+                            
+                            # Prevent infinite processing
+                            if files_processed > self.max_files_per_scan * 10:  # Safety margin
+                                self.logger.warning(f"File enumeration limit reached: {files_processed}")
+                                break
+                            
+                            if item.is_file():
+                                if self._should_scan_file(item, exclude_patterns):
+                                    files.append(item)
+                            elif item.is_dir() and not item.is_symlink():  # Avoid symlink loops
+                                if not self._is_excluded_directory(item, exclude_patterns):
+                                    directories_to_process.append(item)
+                                    
+                    except PermissionError:
+                        self.logger.warning(f"Permission denied accessing directory: {current_dir}")
+                        continue
+                    except OSError as e:
+                        self.logger.warning(f"OS error accessing directory {current_dir}: {e}")
+                        continue
+            
+            # Sort files for consistent processing order
+            files.sort()
+            return files
+            
+        except Exception as e:
+            raise FileSystemException(
+                f"Failed to find source files in {path}: {str(e)}",
+                error_code="FILE_ENUMERATION_ERROR"
+            )
+    
+    def _is_excluded_directory(self, dir_path: Path, exclude_patterns: List[str]) -> bool:
+        """Check if directory should be excluded from scanning.
         
-        return files
+        Args:
+            dir_path: Directory path to check
+            exclude_patterns: Patterns to exclude
+            
+        Returns:
+            True if directory should be excluded
+        """
+        dir_str = str(dir_path)
+        dir_name = dir_path.name
+        
+        # Check against exclude patterns
+        for pattern in exclude_patterns:
+            pattern_regex = pattern.replace('*', '.*')
+            if re.search(pattern_regex, dir_str) or re.search(pattern_regex, dir_name):
+                return True
+        
+        # Additional safety exclusions
+        dangerous_dirs = {'.git', '.svn', '.hg', 'node_modules', '__pycache__', '.pytest_cache'}
+        if dir_name in dangerous_dirs:
+            return True
+        
+        return False
 
     def _should_scan_file(self, file_path: Path, exclude_patterns: List[str]) -> bool:
         """Check if a file should be scanned.
@@ -228,8 +512,8 @@ class CryptoAuditor:
         """
         return self.supported_extensions.get(file_path.suffix)
 
-    def _scan_file(self, file_path: Path, language: str) -> List[Vulnerability]:
-        """Scan a single file for cryptographic vulnerabilities.
+    def _scan_file_safely(self, file_path: Path, language: str) -> List[Vulnerability]:
+        """Safely scan a single file for cryptographic vulnerabilities.
         
         Args:
             file_path: Path to the file to scan
@@ -237,25 +521,230 @@ class CryptoAuditor:
             
         Returns:
             List of vulnerabilities found
+            
+        Raises:
+            Does not raise exceptions - logs errors and returns empty list on failures
         """
         vulnerabilities = []
         
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
-                lines = content.split('\n')
+            # Check file size before reading
+            file_size = file_path.stat().st_size
+            if self._input_validator is None:
+                from .validators import InputValidator
+                self._input_validator = InputValidator()
+            if file_size > self._input_validator.max_file_size:
+                self.logger.warning(
+                    f"File too large to scan: {file_path} ({file_size} bytes)"
+                )
+                return vulnerabilities
             
-            if language == 'python':
-                vulnerabilities.extend(self._scan_python_file(file_path, content, lines))
-            elif language == 'java':
-                vulnerabilities.extend(self._scan_java_file(file_path, content, lines))
-            elif language == 'go':
-                vulnerabilities.extend(self._scan_go_file(file_path, content, lines))
+            # Read file content safely
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = content.split('\n')
+            except UnicodeDecodeError:
+                # Try alternative encodings
+                encodings = ['latin-1', 'cp1252', 'iso-8859-1']
+                content = None
+                for encoding in encodings:
+                    try:
+                        with open(file_path, 'r', encoding=encoding, errors='ignore') as f:
+                            content = f.read()
+                            lines = content.split('\n')
+                        break
+                    except Exception:
+                        continue
+                
+                if content is None:
+                    self.logger.warning(f"Could not decode file: {file_path}")
+                    return vulnerabilities
+            
+            # Scan based on language with error handling
+            try:
+                if language == 'python':
+                    vulnerabilities.extend(self._scan_python_file(file_path, content, lines))
+                elif language == 'java':
+                    vulnerabilities.extend(self._scan_java_file(file_path, content, lines))
+                elif language == 'go':
+                    vulnerabilities.extend(self._scan_go_file(file_path, content, lines))
+                elif language in ['javascript', 'typescript']:
+                    vulnerabilities.extend(self._scan_javascript_file(file_path, content, lines, language))
+                elif language in ['c', 'cpp']:
+                    vulnerabilities.extend(self._scan_c_cpp_file(file_path, content, lines, language))
+                else:
+                    self.logger.debug(f"Unsupported language for scanning: {language}")
+                    
+            except Exception as e:
+                self.logger.error(f"Error scanning {language} file {file_path}: {str(e)}")
+                return vulnerabilities
+            
+            # Validate found vulnerabilities
+            validated_vulnerabilities = []
+            for vuln in vulnerabilities:
+                if self._validate_vulnerability(vuln):
+                    validated_vulnerabilities.append(vuln)
+                else:
+                    self.logger.warning(f"Invalid vulnerability detected in {file_path}:{vuln.line_number}")
+            
+            return validated_vulnerabilities
             
         except Exception as e:
-            # Log error but continue scanning
-            pass
+            self.logger.error(f"Unexpected error scanning file {file_path}: {str(e)}")
+            return vulnerabilities
+    
+    def _validate_vulnerability(self, vulnerability: Vulnerability) -> bool:
+        """Validate a vulnerability object for correctness.
+        
+        Args:
+            vulnerability: Vulnerability to validate
             
+        Returns:
+            True if vulnerability is valid, False otherwise
+        """
+        try:
+            # Check required fields
+            if not vulnerability.file_path or not vulnerability.description:
+                return False
+            
+            # Check line number is reasonable
+            if vulnerability.line_number < 1 or vulnerability.line_number > 1000000:
+                return False
+            
+            # Check algorithm and severity are valid enums
+            if not isinstance(vulnerability.algorithm, CryptoAlgorithm):
+                return False
+                
+            if not isinstance(vulnerability.severity, Severity):
+                return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    @contextmanager
+    def _timeout_context(self, timeout_seconds: int):
+        """Context manager for scan timeout protection.
+        
+        Args:
+            timeout_seconds: Timeout in seconds
+        """
+        start_time = time.time()
+        try:
+            yield
+        finally:
+            elapsed = time.time() - start_time
+            if elapsed > timeout_seconds:
+                self.logger.warning(f"Scan exceeded timeout: {elapsed:.2f}s > {timeout_seconds}s")
+
+    def _scan_javascript_file(self, file_path: Path, content: str, lines: List[str], language: str) -> List[Vulnerability]:
+        """Scan JavaScript/TypeScript file for cryptographic vulnerabilities."""
+        vulnerabilities = []
+        
+        # RSA vulnerabilities
+        for pattern in self.patterns.JAVASCRIPT_PATTERNS['rsa_generation']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.RSA,
+                    severity=Severity.HIGH,
+                    description=f"RSA cryptography detected in {language} (quantum-vulnerable)",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Replace with Web Crypto API post-quantum alternatives or migrate to PQC libraries",
+                    cwe_id="CWE-327"
+                ))
+        
+        # ECC vulnerabilities
+        for pattern in self.patterns.JAVASCRIPT_PATTERNS['ecc_generation']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.ECC,
+                    severity=Severity.HIGH,
+                    description=f"ECC cryptography detected in {language} (quantum-vulnerable)",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Replace with post-quantum digital signature schemes",
+                    cwe_id="CWE-327"
+                ))
+        
+        # Legacy crypto vulnerabilities
+        for pattern in self.patterns.JAVASCRIPT_PATTERNS['legacy_crypto']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.RSA,  # Generic legacy crypto
+                    severity=Severity.MEDIUM,
+                    description=f"Legacy hash function detected in {language}",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Upgrade to SHA-256 or SHA-3 hash functions",
+                    cwe_id="CWE-327"
+                ))
+        
+        return vulnerabilities
+
+    def _scan_c_cpp_file(self, file_path: Path, content: str, lines: List[str], language: str) -> List[Vulnerability]:
+        """Scan C/C++ file for cryptographic vulnerabilities."""
+        vulnerabilities = []
+        
+        # OpenSSL RSA vulnerabilities
+        for pattern in self.patterns.C_CPP_PATTERNS['openssl_rsa']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.RSA,
+                    severity=Severity.HIGH,
+                    description=f"OpenSSL RSA usage detected in {language} (quantum-vulnerable)",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Migrate to liboqs (Open Quantum Safe) for post-quantum cryptography",
+                    cwe_id="CWE-327"
+                ))
+        
+        # OpenSSL ECC vulnerabilities
+        for pattern in self.patterns.C_CPP_PATTERNS['openssl_ecc']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.ECC,
+                    severity=Severity.HIGH,
+                    description=f"OpenSSL ECC usage detected in {language} (quantum-vulnerable)",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Replace with post-quantum signatures using liboqs",
+                    cwe_id="CWE-327"
+                ))
+        
+        # Legacy function vulnerabilities
+        for pattern in self.patterns.C_CPP_PATTERNS['legacy_functions']:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                line_num = content[:match.start()].count('\n') + 1
+                
+                vulnerabilities.append(Vulnerability(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    algorithm=CryptoAlgorithm.RSA,  # Generic legacy
+                    severity=Severity.MEDIUM,
+                    description=f"Legacy cryptographic function detected in {language}",
+                    code_snippet=lines[line_num - 1].strip() if line_num <= len(lines) else "",
+                    recommendation="Replace with modern cryptographic functions",
+                    cwe_id="CWE-327"
+                ))
+        
         return vulnerabilities
 
     def _scan_python_file(self, file_path: Path, content: str, lines: List[str]) -> List[Vulnerability]:
