@@ -243,6 +243,11 @@ class QuantumThreatException(PQCAuditException):
         )
 
 
+class PerformanceException(PQCAuditException):
+    """Exception for performance-related issues."""
+    pass
+
+
 # Exception handler utility class
 
 class ExceptionHandler:
