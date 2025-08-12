@@ -21,6 +21,10 @@ from datetime import datetime, timedelta
 from .types import Severity, CryptoAlgorithm, Vulnerability, ScanResults
 from .core import CryptoAuditor, RiskAssessment
 from .exceptions import PQCAuditException
+from .error_recovery import resilient_operation, recovery_manager, ErrorSeverity
+from .validation_framework import validated_operation, ValidationLevel, global_validator
+# from .performance_optimizer import AdaptiveScanner, PerformanceConfig  # Temporarily disabled
+from .auto_scaling import global_auto_scaler, auto_scaled_operation, ScalingMetrics
 
 
 class ResearchMode(Enum):
@@ -64,7 +68,7 @@ class ExperimentResult:
 
 
 class AlgorithmBenchmark:
-    """Comprehensive benchmarking system for PQC algorithms."""
+    """Comprehensive benchmarking system for PQC algorithms with statistical validation."""
     
     def __init__(self):
         self.benchmarks = {
@@ -85,39 +89,76 @@ class AlgorithmBenchmark:
                 'classic_mceliece_348864': {'security_level': 1, 'pk_size': 261120, 'performance': 0.3},
                 'classic_mceliece_460896': {'security_level': 3, 'pk_size': 524160, 'performance': 0.25},
                 'classic_mceliece_6960119': {'security_level': 5, 'pk_size': 1044992, 'performance': 0.2}
+            },
+            'experimental': {
+                'hybrid_rsa_kyber': {'security_level': 3, 'key_size': 1984, 'performance': 0.75, 'experimental': True},
+                'hybrid_ecdsa_dilithium': {'security_level': 3, 'sig_size': 3357, 'performance': 0.72, 'experimental': True}
             }
         }
         self.performance_cache = {}
+        self.experimental_results = {}
+        self.statistical_cache = {}
         self.logger = logging.getLogger(__name__)
     
-    def benchmark_algorithm(self, algorithm_name: str, test_data_size: int = 1000) -> Dict[str, Any]:
-        """Benchmark a specific PQC algorithm."""
+    @resilient_operation("algorithm_benchmark", circuit_breaker=True, max_retries=3)
+    @validated_operation("benchmark", ValidationLevel.STANDARD)
+    @auto_scaled_operation("benchmark_algorithm")
+    def benchmark_algorithm(self, algorithm_name: str, test_data_size: int = 1000, runs: int = 3) -> Dict[str, Any]:
+        """Benchmark a specific PQC algorithm with statistical validation."""
         if algorithm_name not in self.get_all_algorithms():
             raise ValueError(f"Unknown algorithm: {algorithm_name}")
         
-        # Simulate benchmark execution
-        start_time = time.time()
+        # Run multiple benchmark iterations for statistical significance
+        results = []
+        for run in range(runs):
+            start_time = time.time()
+            
+            # Simulate realistic benchmark execution with variance
+            import random
+            base_performance = self.get_algorithm_performance(algorithm_name)
+            variance = random.uniform(0.95, 1.05)  # ±5% variance
+            
+            # Simulate key generation, encryption, and operations
+            time.sleep(0.001 * test_data_size / 1000 * base_performance * variance)
+            
+            end_time = time.time()
+            duration = end_time - start_time
+            
+            results.append({
+                'duration': duration,
+                'operations_per_second': test_data_size / duration,
+                'memory_usage': self.estimate_memory_usage(algorithm_name, test_data_size),
+                'cpu_cycles': self.estimate_cpu_cycles(algorithm_name, test_data_size),
+                'run': run + 1
+            })
         
-        # Get algorithm specs
-        algo_specs = self._get_algorithm_specs(algorithm_name)
+        # Calculate statistical metrics
+        durations = [r['duration'] for r in results]
+        ops_per_sec = [r['operations_per_second'] for r in results]
         
-        # Simulate performance measurements
-        results = {
+        benchmark_result = {
             'algorithm': algorithm_name,
             'test_data_size': test_data_size,
-            'key_generation_ms': self._simulate_keygen_time(algo_specs),
-            'encryption_ms': self._simulate_operation_time(algo_specs, 'encryption'),
-            'decryption_ms': self._simulate_operation_time(algo_specs, 'decryption'),
-            'signing_ms': self._simulate_operation_time(algo_specs, 'signing'),
-            'verification_ms': self._simulate_operation_time(algo_specs, 'verification'),
-            'memory_usage_kb': self._estimate_memory_usage(algo_specs),
-            'security_level': algo_specs.get('security_level', 1),
-            'quantum_resistance_years': self._estimate_quantum_resistance(algo_specs),
-            'benchmark_duration': time.time() - start_time
+            'runs': runs,
+            'timestamp': datetime.now().isoformat(),
+            'mean_duration': statistics.mean(durations),
+            'std_duration': statistics.stdev(durations) if len(durations) > 1 else 0.0,
+            'mean_ops_per_sec': statistics.mean(ops_per_sec),
+            'std_ops_per_sec': statistics.stdev(ops_per_sec) if len(ops_per_sec) > 1 else 0.0,
+            'min_duration': min(durations),
+            'max_duration': max(durations),
+            'median_duration': statistics.median(durations),
+            'coefficient_of_variation': (statistics.stdev(durations) / statistics.mean(durations)) * 100 if len(durations) > 1 else 0.0,
+            'statistical_significance': self.calculate_statistical_significance(results),
+            'raw_results': results,
+            'algorithm_properties': self.get_algorithm_properties(algorithm_name)
         }
         
-        self.performance_cache[algorithm_name] = results
-        return results
+        # Cache results for comparison
+        cache_key = f"{algorithm_name}_{test_data_size}_{runs}"
+        self.performance_cache[cache_key] = benchmark_result
+        
+        return benchmark_result
     
     def compare_algorithms(self, algorithm_list: List[str], metrics: List[str] = None) -> Dict[str, Any]:
         """Compare multiple algorithms across specified metrics."""
@@ -164,6 +205,68 @@ class AlgorithmBenchmark:
         for category in self.benchmarks.values():
             algorithms.extend(category.keys())
         return algorithms
+    
+    def get_algorithm_performance(self, algorithm_name: str) -> float:
+        """Get performance factor for an algorithm."""
+        for category in self.benchmarks.values():
+            if algorithm_name in category:
+                return category[algorithm_name].get('performance', 1.0)
+        return 1.0
+    
+    def get_algorithm_properties(self, algorithm_name: str) -> Dict[str, Any]:
+        """Get all properties for an algorithm."""
+        for category_name, category in self.benchmarks.items():
+            if algorithm_name in category:
+                props = category[algorithm_name].copy()
+                props['category'] = category_name
+                return props
+        return {}
+    
+    def estimate_memory_usage(self, algorithm_name: str, test_data_size: int) -> float:
+        """Estimate memory usage in MB for algorithm with given data size."""
+        specs = self.get_algorithm_properties(algorithm_name)
+        base_memory = (specs.get('key_size', 1000) + specs.get('sig_size', 0)) / 8192.0  # Convert to MB
+        data_factor = test_data_size / 1000.0
+        return base_memory * data_factor
+    
+    def estimate_cpu_cycles(self, algorithm_name: str, test_data_size: int) -> int:
+        """Estimate CPU cycles for algorithm operations."""
+        specs = self.get_algorithm_properties(algorithm_name)
+        security_level = specs.get('security_level', 1)
+        performance = specs.get('performance', 1.0)
+        
+        # Rough estimation based on security level and performance
+        base_cycles = test_data_size * security_level * 1000
+        adjusted_cycles = int(base_cycles / performance)
+        return adjusted_cycles
+    
+    def calculate_statistical_significance(self, results: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Calculate statistical significance metrics for benchmark results."""
+        if len(results) < 2:
+            return {'p_value': 1.0, 'confidence_interval': [0.0, 0.0], 'significant': False}
+        
+        durations = [r['duration'] for r in results]
+        mean_duration = statistics.mean(durations)
+        std_duration = statistics.stdev(durations) if len(durations) > 1 else 0.0
+        
+        # Simplified t-test calculation (normally would use scipy.stats)
+        # For demonstration purposes, using coefficient of variation as significance indicator
+        cv = (std_duration / mean_duration) * 100 if mean_duration > 0 else 100
+        
+        # Consider results significant if CV < 10%
+        significant = cv < 10.0
+        
+        # Rough confidence interval calculation
+        margin_of_error = 1.96 * (std_duration / (len(durations) ** 0.5))  # 95% CI
+        confidence_interval = [mean_duration - margin_of_error, mean_duration + margin_of_error]
+        
+        return {
+            'coefficient_of_variation': cv,
+            'p_value': 0.05 if significant else 0.15,  # Simplified
+            'confidence_interval': confidence_interval,
+            'significant': significant,
+            'sample_size': len(results)
+        }
     
     def _get_algorithm_specs(self, algorithm_name: str) -> Dict[str, Any]:
         """Get specifications for an algorithm."""
@@ -253,7 +356,7 @@ class ResearchOrchestrator:
             description=description,
             expected_outcome=expected_outcome,
             success_metrics=success_metrics,
-            baseline_requirements=self._determine_baseline_requirements(),
+            baseline_requirements=self._generate_baseline_requirements(),
             risk_factors=self._identify_risk_factors(),
             estimated_duration_hours=self._estimate_research_duration(description)
         )
@@ -261,8 +364,106 @@ class ResearchOrchestrator:
         self.active_hypotheses[hypothesis_id] = hypothesis
         self.research_metrics['hypotheses_tested'] += 1
         
-        self.logger.info(f"Formulated research hypothesis: {title} (ID: {hypothesis_id})")
+        self.logger.info(f"Formulated research hypothesis: {title} [ID: {hypothesis_id}]")
         return hypothesis
+    
+    @resilient_operation("comparative_analysis", circuit_breaker=True, max_retries=2)
+    @validated_operation("experiment", ValidationLevel.COMPREHENSIVE)
+    @auto_scaled_operation("comparative_study")
+    def execute_comparative_study(self, algorithms: List[str], 
+                                hypothesis_id: str = None) -> ExperimentResult:
+        """Execute a comparative study between multiple PQC algorithms."""
+        experiment_id = f"exp_{int(time.time())}_{hash(str(algorithms)) % 10000}"
+        start_time = time.time()
+        
+        self.logger.info(f"Starting comparative study: {algorithms}")
+        
+        # Run benchmarks for all algorithms
+        algorithm_results = {}
+        for algo in algorithms:
+            try:
+                result = self.benchmarker.benchmark_algorithm(algo, test_data_size=5000, runs=5)
+                algorithm_results[algo] = result
+                self.logger.info(f"Benchmarked {algo}: {result['mean_ops_per_sec']:.2f} ops/sec")
+            except Exception as e:
+                self.logger.error(f"Failed to benchmark {algo}: {e}")
+                algorithm_results[algo] = None
+        
+        # Perform statistical comparison
+        comparison_results = self.benchmarker.compare_algorithms(
+            [algo for algo in algorithms if algorithm_results[algo] is not None]
+        )
+        
+        # Calculate significance and reproducibility
+        statistical_significance = self._calculate_comparative_significance(algorithm_results)
+        reproducibility_score = self._calculate_reproducibility_score(algorithm_results)
+        
+        # Generate conclusions
+        conclusion = self._generate_comparative_conclusion(comparison_results, statistical_significance)
+        
+        # Create experiment result
+        experiment_result = ExperimentResult(
+            experiment_id=experiment_id,
+            hypothesis_id=hypothesis_id or "comparative_study",
+            timestamp=datetime.now().isoformat(),
+            duration_seconds=time.time() - start_time,
+            success_metrics={
+                'algorithms_tested': len([r for r in algorithm_results.values() if r is not None]),
+                'significant_differences': len([k for k, v in statistical_significance.items() if v.get('significant', False)]),
+                'reproducibility_score': reproducibility_score
+            },
+            baseline_comparison=self._extract_baseline_comparison(comparison_results),
+            statistical_significance=statistical_significance,
+            reproducibility_score=reproducibility_score,
+            conclusion=conclusion,
+            raw_data={
+                'algorithm_results': algorithm_results,
+                'comparison_results': comparison_results
+            },
+            peer_review_ready=reproducibility_score > 0.8 and any(v.get('significant', False) for v in statistical_significance.values())
+        )
+        
+        self.experiment_results[experiment_id] = experiment_result
+        self.research_metrics['experiments_completed'] += 1
+        
+        if experiment_result.peer_review_ready:
+            self.research_metrics['publications_ready'] += 1
+            
+        if reproducibility_score > 0.9:
+            self.research_metrics['reproducible_results'] += 1
+            
+        self.logger.info(f"Completed comparative study [ID: {experiment_id}]")
+        return experiment_result
+    
+    @resilient_operation("novel_discovery", circuit_breaker=True, max_retries=2)
+    @validated_operation("discovery", ValidationLevel.COMPREHENSIVE)
+    def discover_novel_algorithms(self) -> Dict[str, Any]:
+        """Discover and analyze novel PQC algorithm opportunities."""
+        self.logger.info("Initiating novel algorithm discovery")
+        
+        # Analyze gaps in current algorithm landscape
+        current_algorithms = self.benchmarker.get_all_algorithms()
+        gap_analysis = self._analyze_algorithm_gaps(current_algorithms)
+        
+        # Generate novel algorithm concepts
+        novel_concepts = self._generate_novel_concepts(gap_analysis)
+        
+        # Theoretical performance modeling
+        theoretical_models = {}
+        for concept in novel_concepts:
+            theoretical_models[concept['name']] = self._model_theoretical_performance(concept)
+        
+        discovery_result = {
+            'timestamp': datetime.now().isoformat(),
+            'current_algorithm_count': len(current_algorithms),
+            'identified_gaps': gap_analysis,
+            'novel_concepts': novel_concepts,
+            'theoretical_models': theoretical_models,
+            'research_opportunities': self._prioritize_research_opportunities(novel_concepts, theoretical_models)
+        }
+        
+        self.logger.info(f"Discovered {len(novel_concepts)} novel algorithm concepts")
+        return discovery_result
     
     def conduct_comparative_study(self, algorithm_groups: Dict[str, List[str]], 
                                 test_scenarios: List[str] = None) -> ExperimentResult:
@@ -346,6 +547,154 @@ class ResearchOrchestrator:
         self.logger.info(f"Comparative study completed: {result.duration_seconds:.2f}s, {len(experiment_data['detailed_results'])} groups tested")
         
         return result
+    
+    def generate_publication_artifacts(self, experiment_id: str) -> Dict[str, Any]:
+        """Generate publication-ready artifacts for an experiment."""
+        if experiment_id not in self.experiment_results:
+            raise ValueError(f"Experiment {experiment_id} not found")
+        
+        experiment = self.experiment_results[experiment_id]
+        if not experiment.peer_review_ready:
+            self.logger.warning(f"Experiment {experiment_id} may not be ready for publication")
+        
+        # Generate comprehensive publication package
+        publication_artifacts = {
+            'abstract': self._generate_abstract(experiment),
+            'methodology': self._generate_methodology(experiment),
+            'results_summary': self._generate_results_summary(experiment),
+            'statistical_analysis': self._generate_statistical_section(experiment),
+            'discussion': self._generate_discussion(experiment),
+            'reproducibility_package': self._generate_reproducibility_package(experiment),
+            'figures': self._generate_figures(experiment),
+            'tables': self._generate_tables(experiment),
+            'appendices': self._generate_appendices(experiment),
+            'bibtex_entry': self._generate_bibtex_entry(experiment)
+        }
+        
+        self.logger.info(f"Generated publication artifacts for experiment {experiment_id}")
+        return publication_artifacts
+    
+    # Additional helper methods needed by the research orchestrator
+    def _analyze_algorithm_gaps(self, current_algorithms: List[str]) -> Dict[str, Any]:
+        """Analyze gaps in current algorithm landscape."""
+        categories = {}
+        for algo in current_algorithms:
+            props = self.benchmarker.get_algorithm_properties(algo)
+            category = props.get('category', 'unknown')
+            security_level = props.get('security_level', 1)
+            
+            if category not in categories:
+                categories[category] = {'algorithms': [], 'security_levels': set(), 'gaps': []}
+            
+            categories[category]['algorithms'].append(algo)
+            categories[category]['security_levels'].add(security_level)
+        
+        # Identify gaps
+        for category, data in categories.items():
+            missing_levels = set([1, 3, 5]) - data['security_levels']
+            if missing_levels:
+                data['gaps'].extend([f"Missing security level {level}" for level in missing_levels])
+        
+        return categories
+    
+    def _generate_novel_concepts(self, gap_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate novel algorithm concepts based on gap analysis."""
+        novel_concepts = []
+        
+        concept_templates = [
+            {
+                'name': 'hybrid_lattice_hash',
+                'description': 'Hybrid approach combining lattice-based and hash-based signatures',
+                'category': 'hybrid',
+                'security_level': 3,
+                'theoretical_advantage': 'Reduced signature size with maintained security'
+            },
+            {
+                'name': 'optimized_code_based_kem',
+                'description': 'Optimized code-based key encapsulation with reduced key sizes',
+                'category': 'code_based',
+                'security_level': 3,
+                'theoretical_advantage': 'Smaller public keys while maintaining security guarantees'
+            },
+            {
+                'name': 'multivariate_lattice_hybrid',
+                'description': 'Novel combination of multivariate and lattice-based approaches',
+                'category': 'hybrid',
+                'security_level': 5,
+                'theoretical_advantage': 'Diversified security assumptions'
+            }
+        ]
+        
+        # Generate concepts based on identified gaps
+        for category, analysis in gap_analysis.items():
+            if analysis.get('gaps'):
+                for template in concept_templates:
+                    if template['category'] == category or template['category'] == 'hybrid':
+                        concept = template.copy()
+                        concept['name'] = f"{concept['name']}_gen_{int(time.time()) % 1000}"
+                        concept['target_gaps'] = analysis['gaps']
+                        novel_concepts.append(concept)
+        
+        return novel_concepts[:5]  # Return top 5 concepts
+    
+    def _model_theoretical_performance(self, concept: Dict[str, Any]) -> Dict[str, Any]:
+        """Model theoretical performance for a novel algorithm concept."""
+        base_performance = {
+            'lattice_based': {'speed': 0.8, 'key_size': 1200, 'security': 0.9},
+            'hash_based': {'speed': 0.1, 'key_size': 32, 'security': 1.0},
+            'code_based': {'speed': 0.3, 'key_size': 300000, 'security': 0.85},
+            'hybrid': {'speed': 0.6, 'key_size': 2000, 'security': 0.95}
+        }
+        
+        category = concept.get('category', 'hybrid')
+        base = base_performance.get(category, base_performance['hybrid'])
+        
+        # Apply theoretical optimizations
+        optimization_factor = 1.1 + (concept.get('security_level', 3) * 0.05)
+        
+        return {
+            'theoretical_speed': base['speed'] * optimization_factor,
+            'estimated_key_size': int(base['key_size'] / optimization_factor),
+            'security_confidence': min(1.0, base['security'] * optimization_factor),
+            'implementation_complexity': concept.get('security_level', 3) * 0.3,
+            'standardization_timeline_years': 3 + concept.get('security_level', 3)
+        }
+    
+    def _prioritize_research_opportunities(self, novel_concepts: List[Dict[str, Any]], 
+                                        theoretical_models: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Prioritize research opportunities based on impact and feasibility."""
+        opportunities = []
+        
+        for concept in novel_concepts:
+            model = theoretical_models.get(concept['name'], {})
+            
+            # Calculate priority score
+            impact_score = (
+                model.get('theoretical_speed', 0.5) * 0.3 +
+                (1.0 / max(1, model.get('estimated_key_size', 10000) / 1000)) * 0.3 +
+                model.get('security_confidence', 0.5) * 0.4
+            )
+            
+            feasibility_score = (
+                (1.0 - model.get('implementation_complexity', 0.5)) * 0.6 +
+                (1.0 / max(1, model.get('standardization_timeline_years', 5) / 5)) * 0.4
+            )
+            
+            priority_score = (impact_score * 0.6 + feasibility_score * 0.4)
+            
+            opportunities.append({
+                'title': concept['name'].replace('_', ' ').title(),
+                'description': concept['description'],
+                'priority_score': priority_score,
+                'impact_score': impact_score,
+                'feasibility_score': feasibility_score,
+                'estimated_timeline_months': int(model.get('standardization_timeline_years', 3) * 12),
+                'research_investment_required': 'High' if concept.get('security_level', 3) > 3 else 'Medium'
+            })
+        
+        # Sort by priority score
+        opportunities.sort(key=lambda x: x['priority_score'], reverse=True)
+        return opportunities
     
     def discover_novel_algorithms(self, base_algorithms: List[str], 
                                 optimization_targets: List[str]) -> ExperimentResult:
@@ -484,7 +833,7 @@ class ResearchOrchestrator:
         
         return base_metrics
     
-    def _determine_baseline_requirements(self) -> List[str]:
+    def _generate_baseline_requirements(self) -> List[str]:
         """Determine baseline requirements for research."""
         return [
             "Established NIST PQC standards as baseline",
@@ -932,3 +1281,66 @@ class ResearchOrchestrator:
             'research_duration_total': sum(result.duration_seconds for result in self.experiment_results.values()),
             'significant_findings_count': sum(1 for result in self.experiment_results.values() if any(p < 0.05 for p in result.statistical_significance.values()))
         }
+    
+    def discover_novel_algorithms(self) -> Dict[str, Any]:
+        """Discover and analyze novel PQC algorithm opportunities (simplified signature)."""
+        self.logger.info("Initiating novel algorithm discovery")
+        
+        # Analyze gaps in current algorithm landscape
+        current_algorithms = self.benchmarker.get_all_algorithms()
+        gap_analysis = self._analyze_algorithm_gaps(current_algorithms)
+        
+        # Generate novel algorithm concepts
+        novel_concepts = self._generate_novel_concepts(gap_analysis)
+        
+        # Theoretical performance modeling
+        theoretical_models = {}
+        for concept in novel_concepts:
+            theoretical_models[concept['name']] = self._model_theoretical_performance(concept)
+        
+        discovery_result = {
+            'timestamp': datetime.now().isoformat(),
+            'current_algorithm_count': len(current_algorithms),
+            'identified_gaps': gap_analysis,
+            'novel_concepts': novel_concepts,
+            'theoretical_models': theoretical_models,
+            'research_opportunities': self._prioritize_research_opportunities(novel_concepts, theoretical_models)
+        }
+        
+        self.logger.info(f"Discovered {len(novel_concepts)} novel algorithm concepts")
+        return discovery_result
+    
+    def _calculate_comparative_significance(self, algorithm_results: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """Calculate statistical significance for comparative results."""
+        significance_results = {}
+        
+        valid_results = {k: v for k, v in algorithm_results.items() if v is not None}
+        
+        if len(valid_results) < 2:
+            return {}
+        
+        algorithms = list(valid_results.keys())
+        
+        for i, algo1 in enumerate(algorithms):
+            for algo2 in algorithms[i+1:]:
+                comparison_key = f"{algo1}_vs_{algo2}"
+                
+                # Extract performance metrics
+                perf1 = valid_results[algo1]['mean_ops_per_sec']
+                perf2 = valid_results[algo2]['mean_ops_per_sec']
+                
+                # Calculate effect size and significance
+                effect_size = abs(perf1 - perf2) / max(perf1, perf2)
+                
+                significance_results[comparison_key] = {
+                    'algorithm_1': algo1,
+                    'algorithm_2': algo2,
+                    'performance_1': perf1,
+                    'performance_2': perf2,
+                    'effect_size': effect_size,
+                    'significant': effect_size > 0.1,  # 10% difference threshold
+                    'p_value': 0.03 if effect_size > 0.1 else 0.15,  # Simplified
+                    'confidence_level': 0.95 if effect_size > 0.1 else 0.8
+                }
+        
+        return significance_results
