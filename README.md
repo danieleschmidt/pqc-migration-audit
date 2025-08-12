@@ -23,6 +23,13 @@
 - **SBOM Integration**: Tracks crypto dependencies in Software Bill of Materials
 - **Kubernetes Ready**: Terraform modules for TLS cert rotation
 
+### 🔬 Research-Grade Capabilities (Generation 3)
+- **Statistical Validation**: Comprehensive algorithm benchmarking with significance testing
+- **Auto-Scaling Research**: Intelligent workload prediction and resource management  
+- **Error Recovery**: Advanced resilience with circuit breakers and adaptive strategies
+- **Data Integrity**: Multi-level validation framework with confidence scoring
+- **Performance Optimization**: Concurrent processing, memory management, and caching
+
 ## 🎯 Threat Timeline
 
 | Year | Quantum Threat Level | Action Required |
@@ -68,29 +75,41 @@ pqc-audit scan . --generate-patches --output patches/
 ### Python API Usage
 
 ```python
-from pqc_migration import CryptoAuditor, RiskAssessment
+from pqc_migration_audit.research_engine import AlgorithmBenchmark, ResearchOrchestrator
+from pqc_migration_audit.auto_scaling import global_auto_scaler
+from pqc_migration_audit.validation_framework import validated_operation
 
-# Initialize auditor
-auditor = CryptoAuditor()
+# Initialize research-grade benchmarking
+benchmarker = AlgorithmBenchmark()
+orchestrator = ResearchOrchestrator()
 
-# Scan codebase
-results = auditor.scan_directory(
-    path="./src",
-    include_patterns=["*.py", "*.js", "*.java"],
-    exclude_dirs=["node_modules", "venv"]
+# Start auto-scaling for optimal performance
+global_auto_scaler.start_monitoring()
+
+# Run validated algorithm benchmark
+@validated_operation("benchmark", ValidationLevel.RESEARCH_GRADE)
+def run_benchmark():
+    return benchmarker.benchmark_algorithm(
+        algorithm_name="kyber_768",
+        test_data_size=10000,
+        runs=5
+    )
+
+# Execute with error recovery and validation
+result = run_benchmark()
+
+print(f"Algorithm: {result['algorithm']}")
+print(f"Performance: {result['mean_ops_per_sec']:.0f} ops/sec")
+print(f"Statistical significance: {result['statistical_significance']['significant']}")
+print(f"Validation score: {result['_validation_report']['data_integrity_score']:.3f}")
+
+# Generate comparative analysis
+comparison = orchestrator.conduct_comparative_study(
+    algorithms=['kyber_512', 'kyber_768', 'dilithium2'],
+    test_scenarios=['performance', 'security', 'compatibility']
 )
 
-# Assess risk
-risk = RiskAssessment(results)
-risk_score = risk.calculate_harvest_now_decrypt_later_risk()
-
-print(f"Found {len(results.vulnerabilities)} quantum-vulnerable implementations")
-print(f"Risk score: {risk_score}/100")
-print(f"Estimated migration effort: {risk.migration_hours} hours")
-
-# Generate migration plan
-plan = auditor.create_migration_plan(results)
-plan.save("pqc_migration_plan.json")
+print(f"Best algorithm: {comparison['rankings'][0]['algorithm']}")
 ```
 
 ## 🔍 Detection Examples
