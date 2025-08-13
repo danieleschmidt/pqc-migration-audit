@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 class Severity(Enum):
@@ -38,6 +38,16 @@ class Vulnerability:
 
 
 @dataclass
+class ScanStats:
+    """Statistics from scan execution."""
+    files_processed: int = 0
+    files_skipped: int = 0
+    errors_encountered: int = 0
+    vulnerabilities_found: int = 0
+    scan_start_time: Optional[float] = None
+    performance_metrics: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
 class ScanResults:
     """Results from a cryptographic audit scan."""
     vulnerabilities: List[Vulnerability] = field(default_factory=list)
@@ -47,3 +57,5 @@ class ScanResults:
     scan_path: str = ""
     timestamp: str = ""
     languages_detected: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    scan_stats: Optional['ScanStats'] = None

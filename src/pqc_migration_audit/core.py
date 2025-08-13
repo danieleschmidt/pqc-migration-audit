@@ -12,7 +12,7 @@ from enum import Enum
 import json
 from contextlib import contextmanager
 
-from .types import Severity, CryptoAlgorithm, Vulnerability, ScanResults
+from .types import Severity, CryptoAlgorithm, Vulnerability, ScanResults, ScanStats
 from .exceptions import (
     ScanException, ValidationException, SecurityException, FileSystemException,
     UnsupportedFileTypeException, FileTooLargeException, InsufficientPermissionsException,
@@ -119,6 +119,7 @@ class CryptoPatterns:
     JAVASCRIPT_PATTERNS = {
         'rsa_generation': [
             r'crypto\.generateKeyPair\s*\(\s*["\']rsa["\']',
+            r'generateKeyPairSync\s*\(\s*["\']rsa["\']',
             r'RSA_PKCS1_PADDING',
             r'node-rsa',
             r'jsrsasign',
@@ -173,6 +174,9 @@ class CryptoAuditor:
         self._input_validator = None
         self._security_validator = None
         self._integrity_validator = None
+        
+        # Incremental scanning state
+        self._processed_files = set()
         
         # Scan settings with defaults
         self.max_scan_time = self.config.get('max_scan_time_seconds', 3600)  # 1 hour default
@@ -261,7 +265,14 @@ class CryptoAuditor:
         
         results = ScanResults(
             scan_path=path,
-            timestamp=time.strftime('%Y-%m-%d %H:%M:%S')
+            timestamp=time.strftime('%Y-%m-%d %H:%M:%S'),
+            scan_stats=ScanStats(
+                scan_start_time=start_time,
+                files_processed=0,
+                files_skipped=0,
+                errors_encountered=0,
+                vulnerabilities_found=0
+            )
         )
         
         path_obj = Path(path).resolve()
@@ -276,6 +287,19 @@ class CryptoAuditor:
                 '*/node_modules/*', '*/venv/*', '*/build/*', '*/dist/*',
                 '*/.git/*', '*/tests/*', '*/test/*'
             ])
+            
+            # Handle custom patterns if provided
+            custom_patterns = kwargs.get('custom_patterns', {})
+            if custom_patterns:
+                self._initialize_custom_analyzer(custom_patterns)
+            
+            # Handle incremental scanning
+            incremental = kwargs.get('incremental', False)
+            if incremental:
+                self.logger.debug("Incremental scanning enabled")
+            else:
+                # Reset processed files for non-incremental scans
+                self._processed_files = set()
             
             # Get timeout from config or kwargs
             timeout_seconds = kwargs.get('timeout', self.max_scan_time)
@@ -306,6 +330,11 @@ class CryptoAuditor:
                         if time.time() - start_time > timeout_seconds:
                             raise ScanTimeoutException(timeout_seconds, self.stats['files_processed'])
                         
+                        # Skip already processed files in incremental mode
+                        if incremental and str(file_path) in self._processed_files:
+                            self.stats['files_skipped'] += 1
+                            continue
+                        
                         # Validate file before scanning
                         if self._input_validator is None:
                             from .validators import InputValidator
@@ -323,11 +352,14 @@ class CryptoAuditor:
                         language = self._detect_language(file_path)
                         if language:
                             languages_found.add(language)
-                            file_vulnerabilities = self._scan_file_safely(file_path, language)
+                            file_vulnerabilities = self._scan_file_safely(file_path, language, custom_patterns)
                             results.vulnerabilities.extend(file_vulnerabilities)
                             self.stats['vulnerabilities_found'] += len(file_vulnerabilities)
                             results.scanned_files += 1
                             self.stats['files_processed'] += 1
+                            
+                            # Mark file as processed for incremental scanning
+                            self._processed_files.add(str(file_path))
                             
                             # Count lines safely
                             try:
@@ -351,6 +383,13 @@ class CryptoAuditor:
             
             results.languages_detected = list(languages_found)
             results.scan_time = time.time() - start_time
+            
+            # Update scan stats
+            if results.scan_stats:
+                results.scan_stats.files_processed = self.stats['files_processed']
+                results.scan_stats.files_skipped = self.stats['files_skipped']
+                results.scan_stats.errors_encountered = self.stats['errors_encountered']
+                results.scan_stats.vulnerabilities_found = self.stats['vulnerabilities_found']
             
             # Validate scan results if security validation enabled
             if self.enable_security_validation:
@@ -512,7 +551,7 @@ class CryptoAuditor:
         """
         return self.supported_extensions.get(file_path.suffix)
 
-    def _scan_file_safely(self, file_path: Path, language: str) -> List[Vulnerability]:
+    def _scan_file_safely(self, file_path: Path, language: str, custom_patterns: Dict[str, Any] = None) -> List[Vulnerability]:
         """Safely scan a single file for cryptographic vulnerabilities.
         
         Args:
@@ -579,6 +618,14 @@ class CryptoAuditor:
             except Exception as e:
                 self.logger.error(f"Error scanning {language} file {file_path}: {str(e)}")
                 return vulnerabilities
+            
+            # Check for custom patterns if provided
+            if custom_patterns:
+                try:
+                    custom_vulns = self._analyze_custom_patterns(file_path, content, custom_patterns)
+                    vulnerabilities.extend(custom_vulns)
+                except Exception as e:
+                    self.logger.error(f"Custom pattern analysis failed for {file_path}: {e}")
             
             # Validate found vulnerabilities
             validated_vulnerabilities = []
@@ -923,6 +970,53 @@ class CryptoAuditor:
         }
         
         return plan
+    
+    def _initialize_custom_analyzer(self, custom_patterns: Dict[str, Any]):
+        """Initialize custom pattern analyzer."""
+        self.custom_patterns = custom_patterns
+        self.logger.debug(f"Initialized custom analyzer with {len(custom_patterns)} patterns")
+    
+    def _analyze_custom_patterns(self, file_path: Path, content: str, custom_patterns: Dict[str, Any]) -> List[Vulnerability]:
+        """Analyze content with custom patterns."""
+        vulnerabilities = []
+        lines = content.split('\n')
+        
+        for pattern_name, pattern_config in custom_patterns.items():
+            try:
+                pattern = pattern_config.get('pattern', '')
+                severity_str = pattern_config.get('severity', 'HIGH')
+                description = pattern_config.get('description', f'Custom pattern {pattern_name} detected')
+                # Ensure pattern name is in description for searchability
+                if pattern_name not in description:
+                    description = f'{description} ({pattern_name})'
+                
+                # Convert severity string to enum
+                try:
+                    severity = Severity(severity_str.lower())
+                except ValueError:
+                    severity = Severity.HIGH
+                
+                # Find matches
+                for match in re.finditer(pattern, content, re.IGNORECASE):
+                    line_num = content[:match.start()].count('\n') + 1
+                    code_snippet = lines[line_num - 1].strip() if line_num <= len(lines) else ""
+                    
+                    vulnerability = Vulnerability(
+                        file_path=str(file_path),
+                        line_number=line_num,
+                        algorithm=CryptoAlgorithm.RSA,  # Generic
+                        severity=severity,
+                        description=description,
+                        code_snippet=code_snippet,
+                        recommendation="Review and migrate to secure alternatives",
+                        cwe_id="CWE-327"
+                    )
+                    
+                    vulnerabilities.append(vulnerability)
+            except Exception as e:
+                self.logger.error(f"Error processing custom pattern {pattern_name}: {e}")
+        
+        return vulnerabilities
 
 
 class RiskAssessment:
