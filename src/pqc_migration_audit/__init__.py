@@ -6,7 +6,7 @@ __email__ = "daniel@terragonlabs.com"
 
 # Public API
 from .core import CryptoAuditor, RiskAssessment
-from .types import ScanResults, Vulnerability, Severity, CryptoAlgorithm
+from .types import ScanResults, ScanStats, Vulnerability, Severity, CryptoAlgorithm
 # CLI import commented out to avoid dependency issues during testing
 # from .cli import main
 try:
@@ -20,6 +20,7 @@ __all__ = [
     "CryptoAuditor", 
     "RiskAssessment", 
     "ScanResults",
+    "ScanStats",
     "Vulnerability",
     "Severity",
     "CryptoAlgorithm",

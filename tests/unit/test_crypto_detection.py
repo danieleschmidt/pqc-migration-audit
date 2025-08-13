@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 from pqc_migration_audit.core import CryptoAuditor
 from pqc_migration_audit.scanners import PythonScanner
 from pqc_migration_audit.analyzers import RSAAnalyzer, ECCAnalyzer
+from pqc_migration_audit.types import Severity
 
 
 class TestCryptoDetection:
@@ -84,10 +85,10 @@ class TestCryptoDetection:
 
     @pytest.mark.unit
     @pytest.mark.parametrize("key_size,expected_severity", [
-        (1024, "CRITICAL"),
-        (2048, "HIGH"),
-        (3072, "MEDIUM"),
-        (4096, "LOW"),
+        (1024, Severity.CRITICAL),
+        (2048, Severity.HIGH),
+        (3072, Severity.MEDIUM),
+        (4096, Severity.LOW),
     ])
     def test_rsa_key_size_risk_assessment(self, rsa_analyzer, key_size, expected_severity):
         """Test RSA key size risk assessment."""
@@ -164,7 +165,7 @@ generateKeyPairSync('rsa', { modulusLength: 2048 });
         assert len(results.vulnerabilities) >= 4  # At least one per language
         
         # Verify language detection
-        languages = {v.file_path.suffix for v in results.vulnerabilities}
+        languages = {Path(v.file_path).suffix for v in results.vulnerabilities}
         expected_languages = {'.py', '.java', '.go', '.js'}
         assert expected_languages.issubset(languages)
 
@@ -291,4 +292,4 @@ def generate_key_{i}():
         # Verify custom pattern is detected
         custom_vulns = [v for v in results.vulnerabilities if "custom_crypto" in v.description]
         assert len(custom_vulns) > 0
-        assert custom_vulns[0].severity == "HIGH"
+        assert custom_vulns[0].severity == Severity.HIGH
