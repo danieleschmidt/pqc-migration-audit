@@ -251,6 +251,85 @@ def progress(ctx: click.Context, path: Path, baseline: Optional[Path],
 @cli.command()
 @click.argument('path', type=click.Path(exists=True, path_type=Path))
 @click.option('--output', '-o', type=click.Path(path_type=Path),
+              help='Output directory for generated patches')
+@click.option('--patch-type', '-t', 
+              type=click.Choice(['quick-fix', 'hybrid', 'full-migration']),
+              default='quick-fix', help='Type of patches to generate')
+@click.option('--language', '-l', multiple=True,
+              help='Generate patches only for specific languages')
+@click.pass_context
+def generate_patches(ctx: click.Context, path: Path, output: Optional[Path],
+                    patch_type: str, language: tuple):
+    """Generate migration patches for quantum-vulnerable cryptography."""
+    
+    verbose = ctx.obj.get('verbose', False)
+    
+    # Scan for vulnerabilities first
+    console.print("🔍 Scanning for vulnerabilities...")
+    auditor = CryptoAuditor()
+    results = auditor.scan_directory(str(path))
+    
+    if not results.vulnerabilities:
+        console.print("✅ No vulnerabilities found - no patches needed!", style="green")
+        return
+    
+    # Filter by language if specified
+    if language:
+        filtered_vulns = []
+        for vuln in results.vulnerabilities:
+            vuln_lang = Path(vuln.file_path).suffix.lstrip('.')
+            if vuln_lang in language:
+                filtered_vulns.append(vuln)
+        results.vulnerabilities = filtered_vulns
+    
+    if not results.vulnerabilities:
+        console.print("No vulnerabilities found for specified languages", style="yellow")
+        return
+    
+    # Set output directory
+    if not output:
+        output = Path("pqc-patches")
+    
+    console.print(f"🔧 Generating {patch_type} patches...")
+    
+    try:
+        # Generate patches
+        patch_generator = PQCPatchGenerator()
+        patch_results = patch_generator.generate_patches(
+            results.vulnerabilities,
+            output_dir=output,
+            patch_type=getattr(PatchType, patch_type.upper().replace('-', '_')),
+            verbose=verbose
+        )
+        
+        # Display results
+        console.print(f"✅ Generated {len(patch_results)} patches in {output}")
+        
+        if verbose:
+            table = Table(title="Generated Patches")
+            table.add_column("File", style="cyan")
+            table.add_column("Vulnerability", style="yellow")
+            table.add_column("Patch Type", style="green")
+            
+            for patch in patch_results:
+                table.add_row(
+                    patch.get('original_file', 'Unknown'),
+                    patch.get('vulnerability_type', 'Unknown'),
+                    patch.get('patch_type', 'Unknown')
+                )
+            
+            console.print(table)
+            
+    except Exception as e:
+        console.print(f"❌ Error generating patches: {e}", style="red")
+        sys.exit(1)
+
+
+
+
+@cli.command()
+@click.argument('path', type=click.Path(exists=True, path_type=Path))
+@click.option('--output', '-o', type=click.Path(path_type=Path),
               help='Output file for dashboard')
 @click.option('--historical-data', type=click.Path(exists=True, path_type=Path),
               help='Path to historical scan data for trend analysis')

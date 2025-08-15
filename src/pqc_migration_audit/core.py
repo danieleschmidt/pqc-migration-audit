@@ -19,6 +19,19 @@ from .exceptions import (
     ScanTimeoutException, ExceptionHandler
 )
 
+# Import enhanced features for Generation 2: MAKE IT ROBUST
+try:
+    from .logging_config import setup_logging, get_logger
+    from .security_enhanced import SecurityMonitor, InputSanitizer, SecurityLevel
+    from .resilience_framework import ResilienceManager
+    ENHANCED_FEATURES_AVAILABLE = True
+except ImportError:
+    # Fallback for environments without enhanced features
+    ENHANCED_FEATURES_AVAILABLE = False
+    
+    def get_logger(name='pqc_audit'):
+        return logging.getLogger(name)
+
 # Import performance optimizations (lazy loading to avoid circular imports)
 
 
@@ -168,7 +181,31 @@ class CryptoAuditor:
             config: Configuration options for the auditor
         """
         self.config = config or {}
-        self.logger = logging.getLogger(__name__)
+        
+        # Generation 2: Enhanced logging and monitoring
+        if ENHANCED_FEATURES_AVAILABLE:
+            # Setup advanced logging
+            logging_config = self.config.get('logging', {})
+            setup_logging(logging_config)
+            self.logger = get_logger('pqc_audit.core')
+            
+            # Initialize security monitor
+            security_config = self.config.get('security', {})
+            self.security_monitor = SecurityMonitor(security_config)
+            
+            # Initialize input sanitizer
+            security_level = SecurityLevel(security_config.get('security_level', 'enhanced'))
+            self.input_sanitizer = InputSanitizer(security_level)
+            
+            # Initialize resilience manager
+            resilience_config = self.config.get('resilience', {})
+            self.resilience_manager = ResilienceManager(resilience_config)
+        else:
+            # Fallback to basic logging
+            self.logger = logging.getLogger(__name__)
+            self.security_monitor = None
+            self.input_sanitizer = None
+            self.resilience_manager = None
         
         # Initialize validators (lazy loading to avoid circular imports)
         self._input_validator = None
@@ -178,11 +215,19 @@ class CryptoAuditor:
         # Incremental scanning state
         self._processed_files = set()
         
-        # Scan settings with defaults
+        # Scan settings with defaults (Generation 2: Enhanced validation)
+        if self.input_sanitizer and ENHANCED_FEATURES_AVAILABLE:
+            # Validate and sanitize configuration
+            self.config = self.input_sanitizer.validate_configuration(self.config)
+        
         self.max_scan_time = self.config.get('max_scan_time_seconds', 3600)  # 1 hour default
         self.max_files_per_scan = self.config.get('max_files_per_scan', 10000)
         self.enable_security_validation = self.config.get('enable_security_validation', True)
         self.enable_performance_optimization = self.config.get('enable_performance_optimization', True)
+        
+        # Generation 2: Enhanced error tracking
+        self.error_recovery_enabled = self.config.get('enable_error_recovery', True)
+        self.comprehensive_logging = self.config.get('enable_comprehensive_logging', True)
         
         # Performance components (lazy loading)
         self._adaptive_scanner = None
@@ -237,6 +282,10 @@ class CryptoAuditor:
             ValidationException: If path validation fails
             SecurityException: If security validation fails
         """
+        # Generation 2: Enhanced input sanitization
+        if self.input_sanitizer and ENHANCED_FEATURES_AVAILABLE:
+            path = self.input_sanitizer.sanitize_path(path)
+        
         # Initialize statistics
         self.stats = {
             'files_processed': 0,
@@ -247,6 +296,52 @@ class CryptoAuditor:
         }
         
         start_time = time.time()
+        
+        # Generation 2: Enhanced logging
+        if self.comprehensive_logging:
+            self.logger.log_scan_start(path, {
+                'kwargs': kwargs,
+                'max_scan_time': self.max_scan_time,
+                'max_files_per_scan': self.max_files_per_scan,
+                'security_validation_enabled': self.enable_security_validation
+            })
+        
+        # Generation 2: Resilient operation context
+        if self.resilience_manager and ENHANCED_FEATURES_AVAILABLE:
+            with self.resilience_manager.resilient_operation('scan_directory', {'path': path}):
+                return self._execute_scan_with_resilience(path, start_time, **kwargs)
+        else:
+            return self._execute_scan_basic(path, start_time, **kwargs)
+    
+    def _execute_scan_with_resilience(self, path: str, start_time: float, **kwargs) -> ScanResults:
+        """Execute scan with enhanced resilience features.
+        
+        Args:
+            path: Directory path to scan
+            start_time: Scan start time
+            **kwargs: Additional scanning options
+            
+        Returns:
+            ScanResults containing vulnerabilities and metadata
+        """
+        # Generation 2: Security monitoring context
+        with self.security_monitor.secure_scan_context(path) as scan_id:
+            return self._execute_core_scan(path, start_time, scan_id, **kwargs)
+    
+    def _execute_scan_basic(self, path: str, start_time: float, **kwargs) -> ScanResults:
+        """Execute basic scan without enhanced features.
+        
+        Args:
+            path: Directory path to scan
+            start_time: Scan start time
+            **kwargs: Additional scanning options
+            
+        Returns:
+            ScanResults containing vulnerabilities and metadata
+        """
+        return self._execute_core_scan(path, start_time, None, **kwargs)
+    
+    def _execute_core_scan(self, path: str, start_time: float, scan_id: Optional[str], **kwargs) -> ScanResults:
         
         # Validate input path
         if self._input_validator is None:
@@ -261,7 +356,10 @@ class CryptoAuditor:
         
         # Log warnings from validation
         for warning in validation_result.warnings:
-            self.logger.warning(f"Path validation warning: {warning}")
+            if hasattr(self.logger, 'logger'):
+                self.logger.logger.warning(f"Path validation warning: {warning}")
+            else:
+                self.logger.warning(f"Path validation warning: {warning}")
         
         results = ScanResults(
             scan_path=path,
@@ -296,7 +394,10 @@ class CryptoAuditor:
             # Handle incremental scanning
             incremental = kwargs.get('incremental', False)
             if incremental:
-                self.logger.debug("Incremental scanning enabled")
+                if hasattr(self.logger, 'logger'):
+                    self.logger.logger.debug("Incremental scanning enabled")
+                else:
+                    self.logger.debug("Incremental scanning enabled")
             else:
                 # Reset processed files for non-incremental scans
                 self._processed_files = set()
@@ -317,9 +418,14 @@ class CryptoAuditor:
             
             # Check if we have too many files
             if len(source_files) > self.max_files_per_scan:
-                self.logger.warning(
-                    f"Large scan detected: {len(source_files)} files (limit: {self.max_files_per_scan})"
-                )
+                if hasattr(self.logger, 'logger'):
+                    self.logger.logger.warning(
+                        f"Large scan detected: {len(source_files)} files (limit: {self.max_files_per_scan})"
+                    )
+                else:
+                    self.logger.warning(
+                        f"Large scan detected: {len(source_files)} files (limit: {self.max_files_per_scan})"
+                    )
                 source_files = source_files[:self.max_files_per_scan]
             
             # Scan files with timeout protection
@@ -405,14 +511,24 @@ class CryptoAuditor:
                 
                 # Log security warnings
                 for warning in security_validation.warnings:
-                    self.logger.warning(f"Security warning: {warning}")
+                    if hasattr(self.logger, 'logger'):
+                        self.logger.logger.warning(f"Security warning: {warning}")
+                    else:
+                        self.logger.warning(f"Security warning: {warning}")
             
             # Log scan statistics
-            self.logger.info(
-                f"Scan completed: {self.stats['files_processed']} files processed, "
-                f"{self.stats['files_skipped']} skipped, {self.stats['errors_encountered']} errors, "
-                f"{self.stats['vulnerabilities_found']} vulnerabilities found"
-            )
+            if hasattr(self.logger, 'logger'):
+                self.logger.logger.info(
+                    f"Scan completed: {self.stats['files_processed']} files processed, "
+                    f"{self.stats['files_skipped']} skipped, {self.stats['errors_encountered']} errors, "
+                    f"{self.stats['vulnerabilities_found']} vulnerabilities found"
+                )
+            else:
+                self.logger.info(
+                    f"Scan completed: {self.stats['files_processed']} files processed, "
+                    f"{self.stats['files_skipped']} skipped, {self.stats['errors_encountered']} errors, "
+                    f"{self.stats['vulnerabilities_found']} vulnerabilities found"
+                )
             
             return results
             
