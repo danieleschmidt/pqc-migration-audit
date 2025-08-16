@@ -1090,7 +1090,13 @@ class CryptoAuditor:
     def _initialize_custom_analyzer(self, custom_patterns: Dict[str, Any]):
         """Initialize custom pattern analyzer."""
         self.custom_patterns = custom_patterns
-        self.logger.debug(f"Initialized custom analyzer with {len(custom_patterns)} patterns")
+        # Use safe logging that works with both AuditLogger and standard Logger
+        if hasattr(self.logger, 'debug'):
+            self.logger.debug(f"Initialized custom analyzer with {len(custom_patterns)} patterns")
+        elif hasattr(self.logger, 'logger') and hasattr(self.logger.logger, 'debug'):
+            self.logger.logger.debug(f"Initialized custom analyzer with {len(custom_patterns)} patterns")
+        else:
+            print(f"DEBUG: Initialized custom analyzer with {len(custom_patterns)} patterns")
     
     def _analyze_custom_patterns(self, file_path: Path, content: str, custom_patterns: Dict[str, Any]) -> List[Vulnerability]:
         """Analyze content with custom patterns."""

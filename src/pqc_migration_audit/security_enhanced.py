@@ -432,6 +432,10 @@ class InputSanitizer:
         Raises:
             ValidationException: If path is invalid
         """
+        # Convert Path objects to strings
+        if hasattr(path, '__fspath__'):
+            path = str(path)
+        
         if not path or not isinstance(path, str):
             raise ValidationException("Path must be a non-empty string")
         
