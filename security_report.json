@@ -1,19 +1,102 @@
 {
   "scan_summary": {
-    "files_scanned": 72,
-    "total_issues": 1,
+    "files_scanned": 124,
+    "total_issues": 10,
     "severity_distribution": {
       "critical": 0,
       "high": 0,
-      "medium": 1,
+      "medium": 10,
       "low": 0
     },
     "issue_types": {
-      "vulnerable_dependency": 1
+      "weak_crypto": 6,
+      "insecure_random": 2,
+      "vulnerable_dependency": 2
     },
-    "scan_timestamp": "2025-08-05T00:18:36.354154"
+    "scan_timestamp": "2025-08-18T04:13:49.110401"
   },
   "issues": [
+    {
+      "file_path": "src/pqc_migration_audit/advanced_caching.py",
+      "line_number": 355,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "cache_key = hashlib.md5(key_data.encode()).hexdigest()"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/advanced_resilience.py",
+      "line_number": 286,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "jitter = base_delay * 0.2 * (2 * random.random() - 1)"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/compliance_engine.py",
+      "line_number": 753,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "report_id=f\"COMP-{hashlib.md5(f'{scan_results.scan_path}{datetime.now().isoformat()}'.encode()).hexdigest()[:8]}\","
+    },
+    {
+      "file_path": "src/pqc_migration_audit/performance_engine.py",
+      "line_number": 480,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "key_parts.append(hashlib.md5(str(arg).encode()).hexdigest()[:8])"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/performance_engine.py",
+      "line_number": 487,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "key_parts.append(f\"{k}={hashlib.md5(str(v).encode()).hexdigest()[:8]}\")"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/quantum_threat_intelligence.py",
+      "line_number": 231,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "intelligence_id=hashlib.md5(f\"{entry.link}{title}\".encode()).hexdigest()[:12],"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/resilience_framework.py",
+      "line_number": 174,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "delay *= (0.5 + random.random() * 0.5)"
+    },
+    {
+      "file_path": "src/pqc_migration_audit/security.py",
+      "line_number": 115,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: RC4 is insecure",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "r'RC4\\s*\\(',"
+    },
+    {
+      "file_path": "requirements-production.txt",
+      "line_number": 5,
+      "issue_type": "vulnerable_dependency",
+      "severity": "medium",
+      "description": "Potentially vulnerable dependency: requests",
+      "recommendation": "Update to secure version. Security vulnerabilities in older versions",
+      "code_snippet": "requests>=2.28.0"
+    },
     {
       "file_path": "requirements.txt",
       "line_number": 4,
@@ -24,6 +107,6 @@
       "code_snippet": "requests>=2.31.0"
     }
   ],
-  "security_score": 95,
+  "security_score": 50,
   "pass_threshold": 85
 }
