@@ -4,41 +4,41 @@
     "passed_tests": 4,
     "failed_tests": 0,
     "performance_score": 100,
-    "timestamp": 1754352909.6070235
+    "timestamp": 1755490433.6180286
   },
   "benchmark_results": [
     {
       "test_name": "Basic Scan Performance",
-      "execution_time": 0.026079177856445312,
+      "execution_time": 0.03832530975341797,
       "files_processed": 80,
-      "files_per_second": 3067.581364733416,
-      "memory_usage_mb": 0.25390625,
+      "files_per_second": 2087.3934356881578,
+      "memory_usage_mb": 0.30859375,
       "threshold_met": true,
       "threshold_value": 5.0
     },
     {
       "test_name": "Cached Scan Performance",
-      "execution_time": 0.05116677284240723,
+      "execution_time": 0.08037185668945312,
       "files_processed": 230,
-      "files_per_second": 4495.104678741339,
-      "memory_usage_mb": 0.0,
+      "files_per_second": 2861.6982296264655,
+      "memory_usage_mb": 0.2578125,
       "threshold_met": true,
       "threshold_value": 10.0
     },
     {
       "test_name": "Parallel Scan Performance",
-      "execution_time": 0.0825800895690918,
+      "execution_time": 0.11208128929138184,
       "files_processed": 230,
-      "files_per_second": 2785.1749883071666,
+      "files_per_second": 2052.082033086366,
       "memory_usage_mb": 0.0,
       "threshold_met": true,
       "threshold_value": 15.0
     },
     {
       "test_name": "Adaptive Scan Performance",
-      "execution_time": 0.05313563346862793,
+      "execution_time": 0.07828617095947266,
       "files_processed": 230,
-      "files_per_second": 4328.545365621649,
+      "files_per_second": 2937.939066135536,
       "memory_usage_mb": 0.0,
       "threshold_met": true,
       "threshold_value": 100.0
