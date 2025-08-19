@@ -15,12 +15,12 @@ class Severity(Enum):
 
 class CryptoAlgorithm(Enum):
     """Quantum-vulnerable cryptographic algorithms."""
-    RSA = "RSA"
-    ECC = "ECC"
-    DSA = "DSA"
-    DH = "Diffie-Hellman"
-    ECDSA = "ECDSA"
-    ECDH = "ECDH"
+    RSA = "rsa"
+    ECC = "ecc"
+    DSA = "dsa"
+    DH = "dh"
+    ECDSA = "ecdsa"
+    ECDH = "ecdh"
 
 
 @dataclass
@@ -46,6 +46,14 @@ class ScanStats:
     vulnerabilities_found: int = 0
     scan_start_time: Optional[float] = None
     performance_metrics: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class ValidationResult:
+    """Result of validation operations."""
+    is_valid: bool = True
+    error_message: Optional[str] = None
+    warnings: List[str] = field(default_factory=list)
+
 
 @dataclass
 class ScanResults:
