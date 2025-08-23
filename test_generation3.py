@@ -21,7 +21,7 @@ from pqc_migration_audit.types import Vulnerability, CryptoAlgorithm, Severity
 
 def create_test_files():
     """Create test files for performance testing."""
-    test_dir = Path("test_performance")
+    test_dir = Path("/tmp/test_performance")
     test_dir.mkdir(exist_ok=True)
     
     # Create multiple test files with different patterns
