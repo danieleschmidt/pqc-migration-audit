@@ -1,19 +1,28 @@
 {
   "scan_summary": {
-    "files_scanned": 124,
-    "total_issues": 10,
+    "files_scanned": 1518,
+    "total_issues": 155,
     "severity_distribution": {
       "critical": 0,
-      "high": 0,
-      "medium": 10,
+      "high": 104,
+      "medium": 51,
       "low": 0
     },
     "issue_types": {
-      "weak_crypto": 6,
-      "insecure_random": 2,
+      "weak_crypto": 19,
+      "insecure_random": 17,
+      "command_injection": 55,
+      "shell_injection": 3,
+      "possible_base64_secret": 8,
+      "dangerous_function": 39,
+      "debug_leak": 6,
+      "path_traversal": 2,
+      "hardcoded_token": 1,
+      "hardcoded_password": 1,
+      "sensitive_file": 2,
       "vulnerable_dependency": 2
     },
-    "scan_timestamp": "2025-08-18T04:13:49.110401"
+    "scan_timestamp": "2025-08-23T18:14:51.846899"
   },
   "issues": [
     {
@@ -89,6 +98,1311 @@
       "code_snippet": "r'RC4\\s*\\(',"
     },
     {
+      "file_path": "venv/lib/python3.12/site-packages/packaging/_parser.py",
+      "line_number": 332,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "value = ast.literal_eval(python_str)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/click/_termui_impl.py",
+      "line_number": 449,
+      "issue_type": "shell_injection",
+      "severity": "high",
+      "description": "subprocess call with shell=True detected",
+      "recommendation": "Use shell=False and pass arguments as list",
+      "code_snippet": "    c = subprocess.Popen("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/click/_termui_impl.py",
+      "line_number": 594,
+      "issue_type": "shell_injection",
+      "severity": "high",
+      "description": "subprocess call with shell=True detected",
+      "recommendation": "Use shell=False and pass arguments as list",
+      "code_snippet": "            c = subprocess.Popen("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/requests/auth.py",
+      "line_number": 148,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.md5(x).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/requests/auth.py",
+      "line_number": 156,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: SHA1 is weak, use SHA256 or better",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.sha1(x).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/requests/auth.py",
+      "line_number": 205,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: SHA1 is weak, use SHA256 or better",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "cnonce = hashlib.sha1(s).hexdigest()[:16]"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/requests/utils.py",
+      "line_number": 622,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\" + \"0123456789-._~\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/debug.py",
+      "line_number": 105,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "    code: CodeType = compile("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/debug.py",
+      "line_number": 145,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec(code, globals, locals)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/debug.py",
+      "line_number": 145,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(code, globals, locals)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/environment.py",
+      "line_number": 709,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        return compile(source, filename, \"exec\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/environment.py",
+      "line_number": 1228,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec(code, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/environment.py",
+      "line_number": 1228,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(code, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/filters.py",
+      "line_number": 699,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "return random.choice(seq)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/lexer.py",
+      "line_number": 663,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "value = literal_eval(value_str.replace(\"_\", \"\"))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/nativetypes.py",
+      "line_number": 40,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return literal_eval("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/jinja2/nodes.py",
+      "line_number": 581,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "representation (objects where ``eval(repr(x)) == x`` is true)."
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/gitdb/util.py",
+      "line_number": 139,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: SHA1 is weak, use SHA256 or better",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.sha1(source)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/live.py",
+      "line_number": 377,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "if random.randint(0, 10) < 1:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/live.py",
+      "line_number": 380,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "(random.random() * 320) + 1"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/markup.py",
+      "line_number": 190,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "meta_params = literal_eval(parameters)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/progress.py",
+      "line_number": 1714,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "if random.randint(0, 100) < 1:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/prompt.py",
+      "line_number": 386,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print(\"[prompt.invalid]password too short\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/prompt.py",
+      "line_number": 387,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print(f\"password={password!r}\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/rich/protocol.py",
+      "line_number": 7,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "_GIBBERISH = \"\"\"aihwerij235234ljsdnp34ksodfipwoe234234jlskjdf\"\"\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/cmd.py",
+      "line_number": 1177,
+      "issue_type": "path_traversal",
+      "severity": "medium",
+      "description": "Potential path traversal vulnerability",
+      "recommendation": "Validate and sanitize file paths",
+      "code_snippet": "(see :class:`Popen(..., shell=True) <subprocess.Popen>`)."
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/remote.py",
+      "line_number": 767,
+      "issue_type": "hardcoded_token",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: hardcoded_token",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "token = \" * [would prune] \""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/util.py",
+      "line_number": 363,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "def is_exec(fpath: str) -> bool:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/util.py",
+      "line_number": 380,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "if is_exec(f):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_hooks.py",
+      "line_number": 512,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_hooks.py",
+      "line_number": 534,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "res = self._hookexec(self.name, self._hookimpls.copy(), kwargs, False)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_hooks.py",
+      "line_number": 573,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return self._hookexec(self.name, hookimpls, kwargs, firstresult)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_hooks.py",
+      "line_number": 580,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "res = self._hookexec(self.name, [method], kwargs, False)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_manager.py",
+      "line_number": 111,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "def _hookexec("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_manager.py",
+      "line_number": 120,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return self._inner_hookexec(hook_name, methods, kwargs, firstresult)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pluggy/_manager.py",
+      "line_number": 464,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "def traced_hookexec("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/execfile.py",
+      "line_number": 298,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "    code = compile(source, filename, mode=\"exec\", dont_inherit=True)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/execfile.py",
+      "line_number": 213,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(code, main_mod.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/execfile.py",
+      "line_number": 213,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(code, main_mod.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/lcovreport.py",
+      "line_number": 31,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "hashed = hashlib.md5(line.encode(\"utf-8\"), usedforsecurity=False).digest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/parser.py",
+      "line_number": 432,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            self.code = compile(text, filename, \"exec\", dont_inherit=True)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/parser.py",
+      "line_number": 680,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            return True, eval(node.id)  # pylint: disable=eval-used"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/parser.py",
+      "line_number": 680,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return True, eval(node.id)  # pylint: disable=eval-used"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/patch.py",
+      "line_number": 149,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "PTH_TEXT = f\"import sys; exec({PTH_CODE!r})\\n\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/templite.py",
+      "line_number": 73,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec(python_source, global_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/coverage/templite.py",
+      "line_number": 73,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(python_source, global_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/capture.py",
+      "line_number": 1105,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "os.system('echo \"hello\"')"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/capture.py",
+      "line_number": 1133,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "os.system('echo \"hello\"')"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/outcomes.py",
+      "line_number": 256,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "    compile(modname, \"\", \"eval\")  # to catch syntaxerrors"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/pytester.py",
+      "line_number": 295,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "                    if eval(check, backlocals, call.__dict__):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/pytester.py",
+      "line_number": 295,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "if eval(check, backlocals, call.__dict__):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/skipping.py",
+      "line_number": 117,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            condition_code = compile(condition, filename, \"eval\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/skipping.py",
+      "line_number": 118,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            result = eval(condition_code, globals_)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/skipping.py",
+      "line_number": 91,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "If an old-style string condition is given, it is eval()'d, otherwise the"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/skipping.py",
+      "line_number": 118,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "result = eval(condition_code, globals_)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/__init__.py",
+      "line_number": 1910,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "retrieval (Linux only) a list of frequencies is returned for"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/cachetools/__init__.py",
+      "line_number": 288,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "def __init__(self, maxsize, choice=random.choice, getsizeof=None):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/cachetools/func.py",
+      "line_number": 77,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "def rr_cache(maxsize=128, choice=random.choice, typed=False):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/six.py",
+      "line_number": 735,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec(\"\"\"exec _code_ in _globs_, _locs_\"\"\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/six.py",
+      "line_number": 735,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(\"\"\"exec _code_ in _globs_, _locs_\"\"\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py",
+      "line_number": 1251,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "(unless you are familiar with how eval() and exec() work).  The"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py",
+      "line_number": 1251,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "(unless you are familiar with how eval() and exec() work).  The"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_internal/commands/configuration.py",
+      "line_number": 239,
+      "issue_type": "shell_injection",
+      "severity": "high",
+      "description": "subprocess call with shell=True detected",
+      "recommendation": "Use shell=False and pass arguments as list",
+      "code_snippet": "            subprocess.check_call(f'{editor} \"{fname}\"', shell=True)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_internal/utils/filesystem.py",
+      "line_number": 100,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "name = basename + \"\".join(random.choice(alphabet) for _ in range(6))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_internal/utils/misc.py",
+      "line_number": 520,
+      "issue_type": "hardcoded_password",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: hardcoded_password",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "password = \":****\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py",
+      "line_number": 10,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(compile('''"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_internal/utils/setuptools_build.py",
+      "line_number": 43,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(compile(setup_py_code, filename, \"exec\"))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/distlib/database.py",
+      "line_number": 528,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "hasher = hashlib.md5"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/distlib/database.py",
+      "line_number": 1032,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.md5(content).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/distlib/index.py",
+      "line_number": 269,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "md5_digest = hashlib.md5(file_data).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1560,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            code = compile(source, script_filename, 'exec')"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1561,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(code, namespace, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1571,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            script_code = compile(script_text, script_filename, 'exec')"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1572,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(script_code, namespace, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1561,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(code, namespace, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line_number": 1572,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(script_code, namespace, namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pyparsing/core.py",
+      "line_number": 1219,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print(' '*start + tokens[0])"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pyparsing/results.py",
+      "line_number": 57,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "print(f\"{s} -> {fn(eval(s))}\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/requests/auth.py",
+      "line_number": 148,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: MD5 is cryptographically broken",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.md5(x).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/requests/auth.py",
+      "line_number": 156,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: SHA1 is weak, use SHA256 or better",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "return hashlib.sha1(x).hexdigest()"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/requests/auth.py",
+      "line_number": 205,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: SHA1 is weak, use SHA256 or better",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "cnonce = hashlib.sha1(s).hexdigest()[:16]"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/requests/utils.py",
+      "line_number": 631,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\" + \"0123456789-._~\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/live.py",
+      "line_number": 352,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "if random.randint(0, 10) < 1:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/live.py",
+      "line_number": 355,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "(random.random() * 320) + 1"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/markup.py",
+      "line_number": 184,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "meta_params = literal_eval(parameters)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/progress.py",
+      "line_number": 1701,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "if random.randint(0, 100) < 1:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/prompt.py",
+      "line_number": 369,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print(\"[prompt.invalid]password too short\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/prompt.py",
+      "line_number": 370,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print(f\"password={password!r}\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/rich/protocol.py",
+      "line_number": 7,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "_GIBBERISH = \"\"\"aihwerij235234ljsdnp34ksodfipwoe234234jlskjdf\"\"\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/tenacity/wait.py",
+      "line_number": 72,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "return self.wait_random_min + (random.random() * (self.wait_random_max - self.wait_random_min))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py",
+      "line_number": 103,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py",
+      "line_number": 91,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "this method is equivalent to running ``eval()`` on the input file. The formatter is"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/__init__.py",
+      "line_number": 103,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/__init__.py",
+      "line_number": 153,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/__init__.py",
+      "line_number": 153,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line_number": 787,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec (\"\"\"exec _code_ in _globs_, _locs_\"\"\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line_number": 787,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec (\"\"\"exec _code_ in _globs_, _locs_\"\"\")"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/urllib3/util/retry.py",
+      "line_number": 305,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "backoff_value += random.random() * self.backoff_jitter"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/urllib3/util/url.py",
+      "line_number": 182,
+      "issue_type": "debug_leak",
+      "severity": "medium",
+      "description": "Debug code may leak sensitive information",
+      "recommendation": "Remove debug statements with sensitive data",
+      "code_snippet": "print( urllib3.util.Url(\"https\", \"username:password\","
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/urllib3/contrib/emscripten/fetch.py",
+      "line_number": 524,
+      "issue_type": "path_traversal",
+      "severity": "medium",
+      "description": "Potential path traversal vulnerability",
+      "recommendation": "Validate and sanitize file paths",
+      "code_snippet": "js_xhr.open(request.method, request.url, False)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/formatters/__init__.py",
+      "line_number": 103,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/formatters/__init__.py",
+      "line_number": 91,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "this method is equivalent to running ``eval()`` on the input file. The formatter is"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/formatters/__init__.py",
+      "line_number": 103,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/__init__.py",
+      "line_number": 154,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/__init__.py",
+      "line_number": 154,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(f.read(), custom_namespace)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/_cocoa_builtins.py",
+      "line_number": 14,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: RC4 is insecure",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "COCOA_INTERFACES = {'AAAttribution', 'ABNewPersonViewController', 'ABPeoplePickerNavigationController', 'ABPersonViewController', 'ABUnknownPersonViewController', 'ACAccount', 'ACAccountCredential', 'ACAccountStore', 'ACAccountType', 'ADBannerView', 'ADClient', 'ADInterstitialAd', 'ADInterstitialAdPresentationViewController', 'AEAssessmentConfiguration', 'AEAssessmentSession', 'ALAsset', 'ALAssetRepresentation', 'ALAssetsFilter', 'ALAssetsGroup', 'ALAssetsLibrary', 'APActivationPayload', 'ARAnchor', 'ARAppClipCodeAnchor', 'ARBody2D', 'ARBodyAnchor', 'ARBodyTrackingConfiguration', 'ARCamera', 'ARCoachingOverlayView', 'ARCollaborationData', 'ARConfiguration', 'ARDepthData', 'ARDirectionalLightEstimate', 'AREnvironmentProbeAnchor', 'ARFaceAnchor', 'ARFaceGeometry', 'ARFaceTrackingConfiguration', 'ARFrame', 'ARGeoAnchor', 'ARGeoTrackingConfiguration', 'ARGeoTrackingStatus', 'ARGeometryElement', 'ARGeometrySource', 'ARHitTestResult', 'ARImageAnchor', 'ARImageTrackingConfiguration', 'ARLightEstimate', 'ARMatteGenerator', 'ARMeshAnchor', 'ARMeshGeometry', 'ARObjectAnchor', 'ARObjectScanningConfiguration', 'AROrientationTrackingConfiguration', 'ARParticipantAnchor', 'ARPlaneAnchor', 'ARPlaneGeometry', 'ARPointCloud', 'ARPositionalTrackingConfiguration', 'ARQuickLookPreviewItem', 'ARRaycastQuery', 'ARRaycastResult', 'ARReferenceImage', 'ARReferenceObject', 'ARSCNFaceGeometry', 'ARSCNPlaneGeometry', 'ARSCNView', 'ARSKView', 'ARSession', 'ARSkeleton', 'ARSkeleton2D', 'ARSkeleton3D', 'ARSkeletonDefinition', 'ARTrackedRaycast', 'ARVideoFormat', 'ARView', 'ARWorldMap', 'ARWorldTrackingConfiguration', 'ASAccountAuthenticationModificationController', 'ASAccountAuthenticationModificationExtensionContext', 'ASAccountAuthenticationModificationReplacePasswordWithSignInWithAppleRequest', 'ASAccountAuthenticationModificationRequest', 'ASAccountAuthenticationModificationUpgradePasswordToStrongPasswordRequest', 'ASAccountAuthenticationModificationViewController', 'ASAuthorization', 'ASAuthorizationAppleIDButton', 'ASAuthorizationAppleIDCredential', 'ASAuthorizationAppleIDProvider', 'ASAuthorizationAppleIDRequest', 'ASAuthorizationController', 'ASAuthorizationOpenIDRequest', 'ASAuthorizationPasswordProvider', 'ASAuthorizationPasswordRequest', 'ASAuthorizationProviderExtensionAuthorizationRequest', 'ASAuthorizationRequest', 'ASAuthorizationSingleSignOnCredential', 'ASAuthorizationSingleSignOnProvider', 'ASAuthorizationSingleSignOnRequest', 'ASCredentialIdentityStore', 'ASCredentialIdentityStoreState', 'ASCredentialProviderExtensionContext', 'ASCredentialProviderViewController', 'ASCredentialServiceIdentifier', 'ASIdentifierManager', 'ASPasswordCredential', 'ASPasswordCredentialIdentity', 'ASWebAuthenticationSession', 'ASWebAuthenticationSessionRequest', 'ASWebAuthenticationSessionWebBrowserSessionManager', 'ATTrackingManager', 'AUAudioUnit', 'AUAudioUnitBus', 'AUAudioUnitBusArray', 'AUAudioUnitPreset', 'AUAudioUnitV2Bridge', 'AUAudioUnitViewConfiguration', 'AUParameter', 'AUParameterGroup', 'AUParameterNode', 'AUParameterTree', 'AUViewController', 'AVAggregateAssetDownloadTask', 'AVAsset', 'AVAssetCache', 'AVAssetDownloadStorageManagementPolicy', 'AVAssetDownloadStorageManager', 'AVAssetDownloadTask', 'AVAssetDownloadURLSession', 'AVAssetExportSession', 'AVAssetImageGenerator', 'AVAssetReader', 'AVAssetReaderAudioMixOutput', 'AVAssetReaderOutput', 'AVAssetReaderOutputMetadataAdaptor', 'AVAssetReaderSampleReferenceOutput', 'AVAssetReaderTrackOutput', 'AVAssetReaderVideoCompositionOutput', 'AVAssetResourceLoader', 'AVAssetResourceLoadingContentInformationRequest', 'AVAssetResourceLoadingDataRequest', 'AVAssetResourceLoadingRequest', 'AVAssetResourceLoadingRequestor', 'AVAssetResourceRenewalRequest', 'AVAssetSegmentReport', 'AVAssetSegmentReportSampleInformation', 'AVAssetSegmentTrackReport', 'AVAssetTrack', 'AVAssetTrackGroup', 'AVAssetTrackSegment', 'AVAssetWriter', 'AVAssetWriterInput', 'AVAssetWriterInputGroup', 'AVAssetWriterInputMetadataAdaptor', 'AVAssetWriterInputPassDescription', 'AVAssetWriterInputPixelBufferAdaptor', 'AVAsynchronousCIImageFilteringRequest', 'AVAsynchronousVideoCompositionRequest', 'AVAudioMix', 'AVAudioMixInputParameters', 'AVAudioSession', 'AVCameraCalibrationData', 'AVCaptureAudioChannel', 'AVCaptureAudioDataOutput', 'AVCaptureAudioFileOutput', 'AVCaptureAudioPreviewOutput', 'AVCaptureAutoExposureBracketedStillImageSettings', 'AVCaptureBracketedStillImageSettings', 'AVCaptureConnection', 'AVCaptureDataOutputSynchronizer', 'AVCaptureDepthDataOutput', 'AVCaptureDevice', 'AVCaptureDeviceDiscoverySession', 'AVCaptureDeviceFormat', 'AVCaptureDeviceInput', 'AVCaptureDeviceInputSource', 'AVCaptureFileOutput', 'AVCaptureInput', 'AVCaptureInputPort', 'AVCaptureManualExposureBracketedStillImageSettings', 'AVCaptureMetadataInput', 'AVCaptureMetadataOutput', 'AVCaptureMovieFileOutput', 'AVCaptureMultiCamSession', 'AVCaptureOutput', 'AVCapturePhoto', 'AVCapturePhotoBracketSettings', 'AVCapturePhotoOutput', 'AVCapturePhotoSettings', 'AVCaptureResolvedPhotoSettings', 'AVCaptureScreenInput', 'AVCaptureSession', 'AVCaptureStillImageOutput', 'AVCaptureSynchronizedData', 'AVCaptureSynchronizedDataCollection', 'AVCaptureSynchronizedDepthData', 'AVCaptureSynchronizedMetadataObjectData', 'AVCaptureSynchronizedSampleBufferData', 'AVCaptureSystemPressureState', 'AVCaptureVideoDataOutput', 'AVCaptureVideoPreviewLayer', 'AVComposition', 'AVCompositionTrack', 'AVCompositionTrackFormatDescriptionReplacement', 'AVCompositionTrackSegment', 'AVContentKeyRequest', 'AVContentKeyResponse', 'AVContentKeySession', 'AVDateRangeMetadataGroup', 'AVDepthData', 'AVDisplayCriteria', 'AVFragmentedAsset', 'AVFragmentedAssetMinder', 'AVFragmentedAssetTrack', 'AVFragmentedMovie', 'AVFragmentedMovieMinder', 'AVFragmentedMovieTrack', 'AVFrameRateRange', 'AVMediaDataStorage', 'AVMediaSelection', 'AVMediaSelectionGroup', 'AVMediaSelectionOption', 'AVMetadataBodyObject', 'AVMetadataCatBodyObject', 'AVMetadataDogBodyObject', 'AVMetadataFaceObject', 'AVMetadataGroup', 'AVMetadataHumanBodyObject', 'AVMetadataItem', 'AVMetadataItemFilter', 'AVMetadataItemValueRequest', 'AVMetadataMachineReadableCodeObject', 'AVMetadataObject', 'AVMetadataSalientObject', 'AVMovie', 'AVMovieTrack', 'AVMutableAssetDownloadStorageManagementPolicy', 'AVMutableAudioMix', 'AVMutableAudioMixInputParameters', 'AVMutableComposition', 'AVMutableCompositionTrack', 'AVMutableDateRangeMetadataGroup', 'AVMutableMediaSelection', 'AVMutableMetadataItem', 'AVMutableMovie', 'AVMutableMovieTrack', 'AVMutableTimedMetadataGroup', 'AVMutableVideoComposition', 'AVMutableVideoCompositionInstruction', 'AVMutableVideoCompositionLayerInstruction', 'AVOutputSettingsAssistant', 'AVPersistableContentKeyRequest', 'AVPictureInPictureController', 'AVPlayer', 'AVPlayerItem', 'AVPlayerItemAccessLog', 'AVPlayerItemAccessLogEvent', 'AVPlayerItemErrorLog', 'AVPlayerItemErrorLogEvent', 'AVPlayerItemLegibleOutput', 'AVPlayerItemMediaDataCollector', 'AVPlayerItemMetadataCollector', 'AVPlayerItemMetadataOutput', 'AVPlayerItemOutput', 'AVPlayerItemTrack', 'AVPlayerItemVideoOutput', 'AVPlayerLayer', 'AVPlayerLooper', 'AVPlayerMediaSelectionCriteria', 'AVPlayerViewController', 'AVPortraitEffectsMatte', 'AVQueuePlayer', 'AVRouteDetector', 'AVRoutePickerView', 'AVSampleBufferAudioRenderer', 'AVSampleBufferDisplayLayer', 'AVSampleBufferRenderSynchronizer', 'AVSemanticSegmentationMatte', 'AVSynchronizedLayer', 'AVTextStyleRule', 'AVTimedMetadataGroup', 'AVURLAsset', 'AVVideoComposition', 'AVVideoCompositionCoreAnimationTool', 'AVVideoCompositionInstruction', 'AVVideoCompositionLayerInstruction', 'AVVideoCompositionRenderContext', 'AVVideoCompositionRenderHint', 'AXCustomContent', 'BCChatAction', 'BCChatButton', 'BGAppRefreshTask', 'BGAppRefreshTaskRequest', 'BGProcessingTask', 'BGProcessingTaskRequest', 'BGTask', 'BGTaskRequest', 'BGTaskScheduler', 'CAAnimation', 'CAAnimationGroup', 'CABTMIDICentralViewController', 'CABTMIDILocalPeripheralViewController', 'CABasicAnimation', 'CADisplayLink', 'CAEAGLLayer', 'CAEmitterCell', 'CAEmitterLayer', 'CAGradientLayer', 'CAInterAppAudioSwitcherView', 'CAInterAppAudioTransportView', 'CAKeyframeAnimation', 'CALayer', 'CAMediaTimingFunction', 'CAMetalLayer', 'CAPropertyAnimation', 'CAReplicatorLayer', 'CAScrollLayer', 'CAShapeLayer', 'CASpringAnimation', 'CATextLayer', 'CATiledLayer', 'CATransaction', 'CATransformLayer', 'CATransition', 'CAValueFunction', 'CBATTRequest', 'CBAttribute', 'CBCentral', 'CBCentralManager', 'CBCharacteristic', 'CBDescriptor', 'CBL2CAPChannel', 'CBManager', 'CBMutableCharacteristic', 'CBMutableDescriptor', 'CBMutableService', 'CBPeer', 'CBPeripheral', 'CBPeripheralManager', 'CBService', 'CBUUID', 'CHHapticDynamicParameter', 'CHHapticEngine', 'CHHapticEvent', 'CHHapticEventParameter', 'CHHapticParameterCurve', 'CHHapticParameterCurveControlPoint', 'CHHapticPattern', 'CIAztecCodeDescriptor', 'CIBarcodeDescriptor', 'CIBlendKernel', 'CIColor', 'CIColorKernel', 'CIContext', 'CIDataMatrixCodeDescriptor', 'CIDetector', 'CIFaceFeature', 'CIFeature', 'CIFilter', 'CIFilterGenerator', 'CIFilterShape', 'CIImage', 'CIImageAccumulator', 'CIImageProcessorKernel', 'CIKernel', 'CIPDF417CodeDescriptor', 'CIPlugIn', 'CIQRCodeDescriptor', 'CIQRCodeFeature', 'CIRectangleFeature', 'CIRenderDestination', 'CIRenderInfo', 'CIRenderTask', 'CISampler', 'CITextFeature', 'CIVector', 'CIWarpKernel', 'CKAcceptSharesOperation', 'CKAsset', 'CKContainer', 'CKDatabase', 'CKDatabaseNotification', 'CKDatabaseOperation', 'CKDatabaseSubscription', 'CKDiscoverAllUserIdentitiesOperation', 'CKDiscoverUserIdentitiesOperation', 'CKFetchDatabaseChangesOperation', 'CKFetchNotificationChangesOperation', 'CKFetchRecordChangesOperation', 'CKFetchRecordZoneChangesConfiguration', 'CKFetchRecordZoneChangesOperation', 'CKFetchRecordZoneChangesOptions', 'CKFetchRecordZonesOperation', 'CKFetchRecordsOperation', 'CKFetchShareMetadataOperation', 'CKFetchShareParticipantsOperation', 'CKFetchSubscriptionsOperation', 'CKFetchWebAuthTokenOperation', 'CKLocationSortDescriptor', 'CKMarkNotificationsReadOperation', 'CKModifyBadgeOperation', 'CKModifyRecordZonesOperation', 'CKModifyRecordsOperation', 'CKModifySubscriptionsOperation', 'CKNotification', 'CKNotificationID', 'CKNotificationInfo', 'CKOperation', 'CKOperationConfiguration', 'CKOperationGroup', 'CKQuery', 'CKQueryCursor', 'CKQueryNotification', 'CKQueryOperation', 'CKQuerySubscription', 'CKRecord', 'CKRecordID', 'CKRecordZone', 'CKRecordZoneID', 'CKRecordZoneNotification', 'CKRecordZoneSubscription', 'CKReference', 'CKServerChangeToken', 'CKShare', 'CKShareMetadata', 'CKShareParticipant', 'CKSubscription', 'CKUserIdentity', 'CKUserIdentityLookupInfo', 'CLBeacon', 'CLBeaconIdentityConstraint', 'CLBeaconRegion', 'CLCircularRegion', 'CLFloor', 'CLGeocoder', 'CLHeading', 'CLKComplication', 'CLKComplicationDescriptor', 'CLKComplicationServer', 'CLKComplicationTemplate', 'CLKComplicationTemplateCircularSmallRingImage', 'CLKComplicationTemplateCircularSmallRingText', 'CLKComplicationTemplateCircularSmallSimpleImage', 'CLKComplicationTemplateCircularSmallSimpleText', 'CLKComplicationTemplateCircularSmallStackImage', 'CLKComplicationTemplateCircularSmallStackText', 'CLKComplicationTemplateExtraLargeColumnsText', 'CLKComplicationTemplateExtraLargeRingImage', 'CLKComplicationTemplateExtraLargeRingText', 'CLKComplicationTemplateExtraLargeSimpleImage', 'CLKComplicationTemplateExtraLargeSimpleText', 'CLKComplicationTemplateExtraLargeStackImage', 'CLKComplicationTemplateExtraLargeStackText', 'CLKComplicationTemplateGraphicBezelCircularText', 'CLKComplicationTemplateGraphicCircular', 'CLKComplicationTemplateGraphicCircularClosedGaugeImage', 'CLKComplicationTemplateGraphicCircularClosedGaugeText', 'CLKComplicationTemplateGraphicCircularImage', 'CLKComplicationTemplateGraphicCircularOpenGaugeImage', 'CLKComplicationTemplateGraphicCircularOpenGaugeRangeText', 'CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText', 'CLKComplicationTemplateGraphicCircularStackImage', 'CLKComplicationTemplateGraphicCircularStackText', 'CLKComplicationTemplateGraphicCornerCircularImage', 'CLKComplicationTemplateGraphicCornerGaugeImage', 'CLKComplicationTemplateGraphicCornerGaugeText', 'CLKComplicationTemplateGraphicCornerStackText', 'CLKComplicationTemplateGraphicCornerTextImage', 'CLKComplicationTemplateGraphicExtraLargeCircular', 'CLKComplicationTemplateGraphicExtraLargeCircularClosedGaugeImage', 'CLKComplicationTemplateGraphicExtraLargeCircularClosedGaugeText', 'CLKComplicationTemplateGraphicExtraLargeCircularImage', 'CLKComplicationTemplateGraphicExtraLargeCircularOpenGaugeImage', 'CLKComplicationTemplateGraphicExtraLargeCircularOpenGaugeRangeText', 'CLKComplicationTemplateGraphicExtraLargeCircularOpenGaugeSimpleText', 'CLKComplicationTemplateGraphicExtraLargeCircularStackImage', 'CLKComplicationTemplateGraphicExtraLargeCircularStackText', 'CLKComplicationTemplateGraphicRectangularFullImage', 'CLKComplicationTemplateGraphicRectangularLargeImage', 'CLKComplicationTemplateGraphicRectangularStandardBody', 'CLKComplicationTemplateGraphicRectangularTextGauge', 'CLKComplicationTemplateModularLargeColumns', 'CLKComplicationTemplateModularLargeStandardBody', 'CLKComplicationTemplateModularLargeTable', 'CLKComplicationTemplateModularLargeTallBody', 'CLKComplicationTemplateModularSmallColumnsText', 'CLKComplicationTemplateModularSmallRingImage', 'CLKComplicationTemplateModularSmallRingText', 'CLKComplicationTemplateModularSmallSimpleImage', 'CLKComplicationTemplateModularSmallSimpleText', 'CLKComplicationTemplateModularSmallStackImage', 'CLKComplicationTemplateModularSmallStackText', 'CLKComplicationTemplateUtilitarianLargeFlat', 'CLKComplicationTemplateUtilitarianSmallFlat', 'CLKComplicationTemplateUtilitarianSmallRingImage', 'CLKComplicationTemplateUtilitarianSmallRingText', 'CLKComplicationTemplateUtilitarianSmallSquare', 'CLKComplicationTimelineEntry', 'CLKDateTextProvider', 'CLKFullColorImageProvider', 'CLKGaugeProvider', 'CLKImageProvider', 'CLKRelativeDateTextProvider', 'CLKSimpleGaugeProvider', 'CLKSimpleTextProvider', 'CLKTextProvider', 'CLKTimeIntervalGaugeProvider', 'CLKTimeIntervalTextProvider', 'CLKTimeTextProvider', 'CLKWatchFaceLibrary', 'CLLocation', 'CLLocationManager', 'CLPlacemark', 'CLRegion', 'CLSActivity', 'CLSActivityItem', 'CLSBinaryItem', 'CLSContext', 'CLSDataStore', 'CLSObject', 'CLSProgressReportingCapability', 'CLSQuantityItem', 'CLSScoreItem', 'CLVisit', 'CMAccelerometerData', 'CMAltimeter', 'CMAltitudeData', 'CMAttitude', 'CMDeviceMotion', 'CMDyskineticSymptomResult', 'CMFallDetectionEvent', 'CMFallDetectionManager', 'CMGyroData', 'CMHeadphoneMotionManager', 'CMLogItem', 'CMMagnetometerData', 'CMMotionActivity', 'CMMotionActivityManager', 'CMMotionManager', 'CMMovementDisorderManager', 'CMPedometer', 'CMPedometerData', 'CMPedometerEvent', 'CMRecordedAccelerometerData', 'CMRecordedRotationRateData', 'CMRotationRateData', 'CMSensorDataList', 'CMSensorRecorder', 'CMStepCounter', 'CMTremorResult', 'CNChangeHistoryAddContactEvent', 'CNChangeHistoryAddGroupEvent', 'CNChangeHistoryAddMemberToGroupEvent', 'CNChangeHistoryAddSubgroupToGroupEvent', 'CNChangeHistoryDeleteContactEvent', 'CNChangeHistoryDeleteGroupEvent', 'CNChangeHistoryDropEverythingEvent', 'CNChangeHistoryEvent', 'CNChangeHistoryFetchRequest', 'CNChangeHistoryRemoveMemberFromGroupEvent', 'CNChangeHistoryRemoveSubgroupFromGroupEvent', 'CNChangeHistoryUpdateContactEvent', 'CNChangeHistoryUpdateGroupEvent', 'CNContact', 'CNContactFetchRequest', 'CNContactFormatter', 'CNContactPickerViewController', 'CNContactProperty', 'CNContactRelation', 'CNContactStore', 'CNContactVCardSerialization', 'CNContactViewController', 'CNContactsUserDefaults', 'CNContainer', 'CNFetchRequest', 'CNFetchResult', 'CNGroup', 'CNInstantMessageAddress', 'CNLabeledValue', 'CNMutableContact', 'CNMutableGroup', 'CNMutablePostalAddress', 'CNPhoneNumber', 'CNPostalAddress', 'CNPostalAddressFormatter', 'CNSaveRequest', 'CNSocialProfile', 'CPActionSheetTemplate', 'CPAlertAction', 'CPAlertTemplate', 'CPBarButton', 'CPButton', 'CPContact', 'CPContactCallButton', 'CPContactDirectionsButton', 'CPContactMessageButton', 'CPContactTemplate', 'CPDashboardButton', 'CPDashboardController', 'CPGridButton', 'CPGridTemplate', 'CPImageSet', 'CPInformationItem', 'CPInformationRatingItem', 'CPInformationTemplate', 'CPInterfaceController', 'CPListImageRowItem', 'CPListItem', 'CPListSection', 'CPListTemplate', 'CPManeuver', 'CPMapButton', 'CPMapTemplate', 'CPMessageComposeBarButton', 'CPMessageListItem', 'CPMessageListItemLeadingConfiguration', 'CPMessageListItemTrailingConfiguration', 'CPNavigationAlert', 'CPNavigationSession', 'CPNowPlayingAddToLibraryButton', 'CPNowPlayingButton', 'CPNowPlayingImageButton', 'CPNowPlayingMoreButton', 'CPNowPlayingPlaybackRateButton', 'CPNowPlayingRepeatButton', 'CPNowPlayingShuffleButton', 'CPNowPlayingTemplate', 'CPPointOfInterest', 'CPPointOfInterestTemplate', 'CPRouteChoice', 'CPSearchTemplate', 'CPSessionConfiguration', 'CPTabBarTemplate', 'CPTemplate', 'CPTemplateApplicationDashboardScene', 'CPTemplateApplicationScene', 'CPTextButton', 'CPTravelEstimates', 'CPTrip', 'CPTripPreviewTextConfiguration', 'CPVoiceControlState', 'CPVoiceControlTemplate', 'CPWindow', 'CSCustomAttributeKey', 'CSIndexExtensionRequestHandler', 'CSLocalizedString', 'CSPerson', 'CSSearchQuery', 'CSSearchableIndex', 'CSSearchableItem', 'CSSearchableItemAttributeSet', 'CTCall', 'CTCallCenter', 'CTCarrier', 'CTCellularData', 'CTCellularPlanProvisioning', 'CTCellularPlanProvisioningRequest', 'CTSubscriber', 'CTSubscriberInfo', 'CTTelephonyNetworkInfo', 'CXAction', 'CXAnswerCallAction', 'CXCall', 'CXCallAction', 'CXCallController', 'CXCallDirectoryExtensionContext', 'CXCallDirectoryManager', 'CXCallDirectoryProvider', 'CXCallObserver', 'CXCallUpdate', 'CXEndCallAction', 'CXHandle', 'CXPlayDTMFCallAction', 'CXProvider', 'CXProviderConfiguration', 'CXSetGroupCallAction', 'CXSetHeldCallAction', 'CXSetMutedCallAction', 'CXStartCallAction', 'CXTransaction', 'DCAppAttestService', 'DCDevice', 'EAAccessory', 'EAAccessoryManager', 'EAGLContext', 'EAGLSharegroup', 'EASession', 'EAWiFiUnconfiguredAccessory', 'EAWiFiUnconfiguredAccessoryBrowser', 'EKAlarm', 'EKCalendar', 'EKCalendarChooser', 'EKCalendarItem', 'EKEvent', 'EKEventEditViewController', 'EKEventStore', 'EKEventViewController', 'EKObject', 'EKParticipant', 'EKRecurrenceDayOfWeek', 'EKRecurrenceEnd', 'EKRecurrenceRule', 'EKReminder', 'EKSource', 'EKStructuredLocation', 'ENExposureConfiguration', 'ENExposureDaySummary', 'ENExposureDetectionSummary', 'ENExposureInfo', 'ENExposureSummaryItem', 'ENExposureWindow', 'ENManager', 'ENScanInstance', 'ENTemporaryExposureKey', 'EntityRotationGestureRecognizer', 'EntityScaleGestureRecognizer', 'EntityTranslationGestureRecognizer', 'FPUIActionExtensionContext', 'FPUIActionExtensionViewController', 'GCColor', 'GCController', 'GCControllerAxisInput', 'GCControllerButtonInput', 'GCControllerDirectionPad', 'GCControllerElement', 'GCControllerTouchpad', 'GCDeviceBattery', 'GCDeviceCursor', 'GCDeviceHaptics', 'GCDeviceLight', 'GCDirectionalGamepad', 'GCDualShockGamepad', 'GCEventViewController', 'GCExtendedGamepad', 'GCExtendedGamepadSnapshot', 'GCGamepad', 'GCGamepadSnapshot', 'GCKeyboard', 'GCKeyboardInput', 'GCMicroGamepad', 'GCMicroGamepadSnapshot', 'GCMotion', 'GCMouse', 'GCMouseInput', 'GCPhysicalInputProfile', 'GCXboxGamepad', 'GKARC4RandomSource', 'GKAccessPoint', 'GKAchievement', 'GKAchievementChallenge', 'GKAchievementDescription', 'GKAchievementViewController', 'GKAgent', 'GKAgent2D', 'GKAgent3D', 'GKBasePlayer', 'GKBehavior', 'GKBillowNoiseSource', 'GKChallenge', 'GKChallengeEventHandler', 'GKCheckerboardNoiseSource', 'GKCircleObstacle', 'GKCloudPlayer', 'GKCoherentNoiseSource', 'GKComponent', 'GKComponentSystem', 'GKCompositeBehavior', 'GKConstantNoiseSource', 'GKCylindersNoiseSource', 'GKDecisionNode', 'GKDecisionTree', 'GKEntity', 'GKFriendRequestComposeViewController', 'GKGameCenterViewController', 'GKGameSession', 'GKGameSessionSharingViewController', 'GKGaussianDistribution', 'GKGoal', 'GKGraph', 'GKGraphNode', 'GKGraphNode2D', 'GKGraphNode3D', 'GKGridGraph', 'GKGridGraphNode', 'GKInvite', 'GKLeaderboard', 'GKLeaderboardEntry', 'GKLeaderboardScore', 'GKLeaderboardSet', 'GKLeaderboardViewController', 'GKLinearCongruentialRandomSource', 'GKLocalPlayer', 'GKMatch', 'GKMatchRequest', 'GKMatchmaker', 'GKMatchmakerViewController', 'GKMersenneTwisterRandomSource', 'GKMeshGraph', 'GKMinmaxStrategist', 'GKMonteCarloStrategist', 'GKNSPredicateRule', 'GKNoise', 'GKNoiseMap', 'GKNoiseSource', 'GKNotificationBanner', 'GKObstacle', 'GKObstacleGraph', 'GKOctree', 'GKOctreeNode', 'GKPath', 'GKPeerPickerController', 'GKPerlinNoiseSource', 'GKPlayer', 'GKPolygonObstacle', 'GKQuadtree', 'GKQuadtreeNode', 'GKRTree', 'GKRandomDistribution', 'GKRandomSource', 'GKRidgedNoiseSource', 'GKRule', 'GKRuleSystem', 'GKSCNNodeComponent', 'GKSKNodeComponent', 'GKSavedGame', 'GKScene', 'GKScore', 'GKScoreChallenge', 'GKSession', 'GKShuffledDistribution', 'GKSphereObstacle', 'GKSpheresNoiseSource', 'GKState', 'GKStateMachine', 'GKTurnBasedEventHandler', 'GKTurnBasedExchangeReply', 'GKTurnBasedMatch', 'GKTurnBasedMatchmakerViewController', 'GKTurnBasedParticipant', 'GKVoiceChat', 'GKVoiceChatService', 'GKVoronoiNoiseSource', 'GLKBaseEffect', 'GLKEffectProperty', 'GLKEffectPropertyFog', 'GLKEffectPropertyLight', 'GLKEffectPropertyMaterial', 'GLKEffectPropertyTexture', 'GLKEffectPropertyTransform', 'GLKMesh', 'GLKMeshBuffer', 'GLKMeshBufferAllocator', 'GLKReflectionMapEffect', 'GLKSkyboxEffect', 'GLKSubmesh', 'GLKTextureInfo', 'GLKTextureLoader', 'GLKView', 'GLKViewController', 'HKActivityMoveModeObject', 'HKActivityRingView', 'HKActivitySummary', 'HKActivitySummaryQuery', 'HKActivitySummaryType', 'HKAnchoredObjectQuery', 'HKAudiogramSample', 'HKAudiogramSampleType', 'HKAudiogramSensitivityPoint', 'HKBiologicalSexObject', 'HKBloodTypeObject', 'HKCDADocument', 'HKCDADocumentSample', 'HKCategorySample', 'HKCategoryType', 'HKCharacteristicType', 'HKClinicalRecord', 'HKClinicalType', 'HKCorrelation', 'HKCorrelationQuery', 'HKCorrelationType', 'HKCumulativeQuantitySample', 'HKCumulativeQuantitySeriesSample', 'HKDeletedObject', 'HKDevice', 'HKDiscreteQuantitySample', 'HKDocumentQuery', 'HKDocumentSample', 'HKDocumentType', 'HKElectrocardiogram', 'HKElectrocardiogramQuery', 'HKElectrocardiogramType', 'HKElectrocardiogramVoltageMeasurement', 'HKFHIRResource', 'HKFHIRVersion', 'HKFitzpatrickSkinTypeObject', 'HKHealthStore', 'HKHeartbeatSeriesBuilder', 'HKHeartbeatSeriesQuery', 'HKHeartbeatSeriesSample', 'HKLiveWorkoutBuilder', 'HKLiveWorkoutDataSource', 'HKObject', 'HKObjectType', 'HKObserverQuery', 'HKQuantity', 'HKQuantitySample', 'HKQuantitySeriesSampleBuilder', 'HKQuantitySeriesSampleQuery', 'HKQuantityType', 'HKQuery', 'HKQueryAnchor', 'HKSample', 'HKSampleQuery', 'HKSampleType', 'HKSeriesBuilder', 'HKSeriesSample', 'HKSeriesType', 'HKSource', 'HKSourceQuery', 'HKSourceRevision', 'HKStatistics', 'HKStatisticsCollection', 'HKStatisticsCollectionQuery', 'HKStatisticsQuery', 'HKUnit', 'HKWheelchairUseObject', 'HKWorkout', 'HKWorkoutBuilder', 'HKWorkoutConfiguration', 'HKWorkoutEvent', 'HKWorkoutRoute', 'HKWorkoutRouteBuilder', 'HKWorkoutRouteQuery', 'HKWorkoutSession', 'HKWorkoutType', 'HMAccessControl', 'HMAccessory', 'HMAccessoryBrowser', 'HMAccessoryCategory', 'HMAccessoryOwnershipToken', 'HMAccessoryProfile', 'HMAccessorySetupPayload', 'HMAction', 'HMActionSet', 'HMAddAccessoryRequest', 'HMCalendarEvent', 'HMCameraAudioControl', 'HMCameraControl', 'HMCameraProfile', 'HMCameraSettingsControl', 'HMCameraSnapshot', 'HMCameraSnapshotControl', 'HMCameraSource', 'HMCameraStream', 'HMCameraStreamControl', 'HMCameraView', 'HMCharacteristic', 'HMCharacteristicEvent', 'HMCharacteristicMetadata', 'HMCharacteristicThresholdRangeEvent', 'HMCharacteristicWriteAction', 'HMDurationEvent', 'HMEvent', 'HMEventTrigger', 'HMHome', 'HMHomeAccessControl', 'HMHomeManager', 'HMLocationEvent', 'HMMutableCalendarEvent', 'HMMutableCharacteristicEvent', 'HMMutableCharacteristicThresholdRangeEvent', 'HMMutableDurationEvent', 'HMMutableLocationEvent', 'HMMutablePresenceEvent', 'HMMutableSignificantTimeEvent', 'HMNetworkConfigurationProfile', 'HMNumberRange', 'HMPresenceEvent', 'HMRoom', 'HMService', 'HMServiceGroup', 'HMSignificantTimeEvent', 'HMTimeEvent', 'HMTimerTrigger', 'HMTrigger', 'HMUser', 'HMZone', 'ICCameraDevice', 'ICCameraFile', 'ICCameraFolder', 'ICCameraItem', 'ICDevice', 'ICDeviceBrowser', 'ICScannerBandData', 'ICScannerDevice', 'ICScannerFeature', 'ICScannerFeatureBoolean', 'ICScannerFeatureEnumeration', 'ICScannerFeatureRange', 'ICScannerFeatureTemplate', 'ICScannerFunctionalUnit', 'ICScannerFunctionalUnitDocumentFeeder', 'ICScannerFunctionalUnitFlatbed', 'ICScannerFunctionalUnitNegativeTransparency', 'ICScannerFunctionalUnitPositiveTransparency', 'ILCallClassificationRequest', 'ILCallCommunication', 'ILClassificationRequest', 'ILClassificationResponse', 'ILClassificationUIExtensionContext', 'ILClassificationUIExtensionViewController', 'ILCommunication', 'ILMessageClassificationRequest', 'ILMessageCommunication', 'ILMessageFilterExtension', 'ILMessageFilterExtensionContext', 'ILMessageFilterQueryRequest', 'ILMessageFilterQueryResponse', 'ILNetworkResponse', 'INAccountTypeResolutionResult', 'INActivateCarSignalIntent', 'INActivateCarSignalIntentResponse', 'INAddMediaIntent', 'INAddMediaIntentResponse', 'INAddMediaMediaDestinationResolutionResult', 'INAddMediaMediaItemResolutionResult', 'INAddTasksIntent', 'INAddTasksIntentResponse', 'INAddTasksTargetTaskListResolutionResult', 'INAddTasksTemporalEventTriggerResolutionResult', 'INAirline', 'INAirport', 'INAirportGate', 'INAppendToNoteIntent', 'INAppendToNoteIntentResponse', 'INBalanceAmount', 'INBalanceTypeResolutionResult', 'INBillDetails', 'INBillPayee', 'INBillPayeeResolutionResult', 'INBillTypeResolutionResult', 'INBoatReservation', 'INBoatTrip', 'INBookRestaurantReservationIntent', 'INBookRestaurantReservationIntentResponse', 'INBooleanResolutionResult', 'INBusReservation', 'INBusTrip', 'INCallCapabilityResolutionResult', 'INCallDestinationTypeResolutionResult', 'INCallRecord', 'INCallRecordFilter', 'INCallRecordResolutionResult', 'INCallRecordTypeOptionsResolutionResult', 'INCallRecordTypeResolutionResult', 'INCancelRideIntent', 'INCancelRideIntentResponse', 'INCancelWorkoutIntent', 'INCancelWorkoutIntentResponse', 'INCar', 'INCarAirCirculationModeResolutionResult', 'INCarAudioSourceResolutionResult', 'INCarDefrosterResolutionResult', 'INCarHeadUnit', 'INCarSeatResolutionResult', 'INCarSignalOptionsResolutionResult', 'INCreateNoteIntent', 'INCreateNoteIntentResponse', 'INCreateTaskListIntent', 'INCreateTaskListIntentResponse', 'INCurrencyAmount', 'INCurrencyAmountResolutionResult', 'INDailyRoutineRelevanceProvider', 'INDateComponentsRange', 'INDateComponentsRangeResolutionResult', 'INDateComponentsResolutionResult', 'INDateRelevanceProvider', 'INDateSearchTypeResolutionResult', 'INDefaultCardTemplate', 'INDeleteTasksIntent', 'INDeleteTasksIntentResponse', 'INDeleteTasksTaskListResolutionResult', 'INDeleteTasksTaskResolutionResult', 'INDoubleResolutionResult', 'INEndWorkoutIntent', 'INEndWorkoutIntentResponse', 'INEnergyResolutionResult', 'INEnumResolutionResult', 'INExtension', 'INFile', 'INFileResolutionResult', 'INFlight', 'INFlightReservation', 'INGetAvailableRestaurantReservationBookingDefaultsIntent', 'INGetAvailableRestaurantReservationBookingDefaultsIntentResponse', 'INGetAvailableRestaurantReservationBookingsIntent', 'INGetAvailableRestaurantReservationBookingsIntentResponse', 'INGetCarLockStatusIntent', 'INGetCarLockStatusIntentResponse', 'INGetCarPowerLevelStatusIntent', 'INGetCarPowerLevelStatusIntentResponse', 'INGetReservationDetailsIntent', 'INGetReservationDetailsIntentResponse', 'INGetRestaurantGuestIntent', 'INGetRestaurantGuestIntentResponse', 'INGetRideStatusIntent', 'INGetRideStatusIntentResponse', 'INGetUserCurrentRestaurantReservationBookingsIntent', 'INGetUserCurrentRestaurantReservationBookingsIntentResponse', 'INGetVisualCodeIntent', 'INGetVisualCodeIntentResponse', 'INImage', 'INImageNoteContent', 'INIntegerResolutionResult', 'INIntent', 'INIntentResolutionResult', 'INIntentResponse', 'INInteraction', 'INLengthResolutionResult', 'INListCarsIntent', 'INListCarsIntentResponse', 'INListRideOptionsIntent', 'INListRideOptionsIntentResponse', 'INLocationRelevanceProvider', 'INLocationSearchTypeResolutionResult', 'INLodgingReservation', 'INMassResolutionResult', 'INMediaAffinityTypeResolutionResult', 'INMediaDestination', 'INMediaDestinationResolutionResult', 'INMediaItem', 'INMediaItemResolutionResult', 'INMediaSearch', 'INMediaUserContext', 'INMessage', 'INMessageAttributeOptionsResolutionResult', 'INMessageAttributeResolutionResult', 'INNote', 'INNoteContent', 'INNoteContentResolutionResult', 'INNoteContentTypeResolutionResult', 'INNoteResolutionResult', 'INNotebookItemTypeResolutionResult', 'INObject', 'INObjectCollection', 'INObjectResolutionResult', 'INObjectSection', 'INOutgoingMessageTypeResolutionResult', 'INParameter', 'INPauseWorkoutIntent', 'INPauseWorkoutIntentResponse', 'INPayBillIntent', 'INPayBillIntentResponse', 'INPaymentAccount', 'INPaymentAccountResolutionResult', 'INPaymentAmount', 'INPaymentAmountResolutionResult', 'INPaymentMethod', 'INPaymentMethodResolutionResult', 'INPaymentRecord', 'INPaymentStatusResolutionResult', 'INPerson', 'INPersonHandle', 'INPersonResolutionResult', 'INPlacemarkResolutionResult', 'INPlayMediaIntent', 'INPlayMediaIntentResponse', 'INPlayMediaMediaItemResolutionResult', 'INPlayMediaPlaybackSpeedResolutionResult', 'INPlaybackQueueLocationResolutionResult', 'INPlaybackRepeatModeResolutionResult', 'INPreferences', 'INPriceRange', 'INRadioTypeResolutionResult', 'INRecurrenceRule', 'INRelativeReferenceResolutionResult', 'INRelativeSettingResolutionResult', 'INRelevanceProvider', 'INRelevantShortcut', 'INRelevantShortcutStore', 'INRentalCar', 'INRentalCarReservation', 'INRequestPaymentCurrencyAmountResolutionResult', 'INRequestPaymentIntent', 'INRequestPaymentIntentResponse', 'INRequestPaymentPayerResolutionResult', 'INRequestRideIntent', 'INRequestRideIntentResponse', 'INReservation', 'INReservationAction', 'INRestaurant', 'INRestaurantGuest', 'INRestaurantGuestDisplayPreferences', 'INRestaurantGuestResolutionResult', 'INRestaurantOffer', 'INRestaurantReservation', 'INRestaurantReservationBooking', 'INRestaurantReservationUserBooking', 'INRestaurantResolutionResult', 'INResumeWorkoutIntent', 'INResumeWorkoutIntentResponse', 'INRideCompletionStatus', 'INRideDriver', 'INRideFareLineItem', 'INRideOption', 'INRidePartySizeOption', 'INRideStatus', 'INRideVehicle', 'INSaveProfileInCarIntent', 'INSaveProfileInCarIntentResponse', 'INSearchCallHistoryIntent', 'INSearchCallHistoryIntentResponse', 'INSearchForAccountsIntent', 'INSearchForAccountsIntentResponse', 'INSearchForBillsIntent', 'INSearchForBillsIntentResponse', 'INSearchForMediaIntent', 'INSearchForMediaIntentResponse', 'INSearchForMediaMediaItemResolutionResult', 'INSearchForMessagesIntent', 'INSearchForMessagesIntentResponse', 'INSearchForNotebookItemsIntent', 'INSearchForNotebookItemsIntentResponse', 'INSearchForPhotosIntent', 'INSearchForPhotosIntentResponse', 'INSeat', 'INSendMessageAttachment', 'INSendMessageIntent', 'INSendMessageIntentResponse', 'INSendMessageRecipientResolutionResult', 'INSendPaymentCurrencyAmountResolutionResult', 'INSendPaymentIntent', 'INSendPaymentIntentResponse', 'INSendPaymentPayeeResolutionResult', 'INSendRideFeedbackIntent', 'INSendRideFeedbackIntentResponse', 'INSetAudioSourceInCarIntent', 'INSetAudioSourceInCarIntentResponse', 'INSetCarLockStatusIntent', 'INSetCarLockStatusIntentResponse', 'INSetClimateSettingsInCarIntent', 'INSetClimateSettingsInCarIntentResponse', 'INSetDefrosterSettingsInCarIntent', 'INSetDefrosterSettingsInCarIntentResponse', 'INSetMessageAttributeIntent', 'INSetMessageAttributeIntentResponse', 'INSetProfileInCarIntent', 'INSetProfileInCarIntentResponse', 'INSetRadioStationIntent', 'INSetRadioStationIntentResponse', 'INSetSeatSettingsInCarIntent', 'INSetSeatSettingsInCarIntentResponse', 'INSetTaskAttributeIntent', 'INSetTaskAttributeIntentResponse', 'INSetTaskAttributeTemporalEventTriggerResolutionResult', 'INShortcut', 'INSnoozeTasksIntent', 'INSnoozeTasksIntentResponse', 'INSnoozeTasksTaskResolutionResult', 'INSpatialEventTrigger', 'INSpatialEventTriggerResolutionResult', 'INSpeakableString', 'INSpeakableStringResolutionResult', 'INSpeedResolutionResult', 'INStartAudioCallIntent', 'INStartAudioCallIntentResponse', 'INStartCallCallCapabilityResolutionResult', 'INStartCallCallRecordToCallBackResolutionResult', 'INStartCallContactResolutionResult', 'INStartCallIntent', 'INStartCallIntentResponse', 'INStartPhotoPlaybackIntent', 'INStartPhotoPlaybackIntentResponse', 'INStartVideoCallIntent', 'INStartVideoCallIntentResponse', 'INStartWorkoutIntent', 'INStartWorkoutIntentResponse', 'INStringResolutionResult', 'INTask', 'INTaskList', 'INTaskListResolutionResult', 'INTaskPriorityResolutionResult', 'INTaskResolutionResult', 'INTaskStatusResolutionResult', 'INTemperatureResolutionResult', 'INTemporalEventTrigger', 'INTemporalEventTriggerResolutionResult', 'INTemporalEventTriggerTypeOptionsResolutionResult', 'INTermsAndConditions', 'INTextNoteContent', 'INTicketedEvent', 'INTicketedEventReservation', 'INTimeIntervalResolutionResult', 'INTrainReservation', 'INTrainTrip', 'INTransferMoneyIntent', 'INTransferMoneyIntentResponse', 'INUIAddVoiceShortcutButton', 'INUIAddVoiceShortcutViewController', 'INUIEditVoiceShortcutViewController', 'INURLResolutionResult', 'INUpcomingMediaManager', 'INUpdateMediaAffinityIntent', 'INUpdateMediaAffinityIntentResponse', 'INUpdateMediaAffinityMediaItemResolutionResult', 'INUserContext', 'INVisualCodeTypeResolutionResult', 'INVocabulary', 'INVoiceShortcut', 'INVoiceShortcutCenter', 'INVolumeResolutionResult', 'INWorkoutGoalUnitTypeResolutionResult', 'INWorkoutLocationTypeResolutionResult', 'IOSurface', 'JSContext', 'JSManagedValue', 'JSValue', 'JSVirtualMachine', 'LAContext', 'LPLinkMetadata', 'LPLinkView', 'LPMetadataProvider', 'MCAdvertiserAssistant', 'MCBrowserViewController', 'MCNearbyServiceAdvertiser', 'MCNearbyServiceBrowser', 'MCPeerID', 'MCSession', 'MDLAnimatedMatrix4x4', 'MDLAnimatedQuaternion', 'MDLAnimatedQuaternionArray', 'MDLAnimatedScalar', 'MDLAnimatedScalarArray', 'MDLAnimatedValue', 'MDLAnimatedVector2', 'MDLAnimatedVector3', 'MDLAnimatedVector3Array', 'MDLAnimatedVector4', 'MDLAnimationBindComponent', 'MDLAreaLight', 'MDLAsset', 'MDLBundleAssetResolver', 'MDLCamera', 'MDLCheckerboardTexture', 'MDLColorSwatchTexture', 'MDLLight', 'MDLLightProbe', 'MDLMaterial', 'MDLMaterialProperty', 'MDLMaterialPropertyConnection', 'MDLMaterialPropertyGraph', 'MDLMaterialPropertyNode', 'MDLMatrix4x4Array', 'MDLMesh', 'MDLMeshBufferData', 'MDLMeshBufferDataAllocator', 'MDLMeshBufferMap', 'MDLMeshBufferZoneDefault', 'MDLNoiseTexture', 'MDLNormalMapTexture', 'MDLObject', 'MDLObjectContainer', 'MDLPackedJointAnimation', 'MDLPathAssetResolver', 'MDLPhotometricLight', 'MDLPhysicallyPlausibleLight', 'MDLPhysicallyPlausibleScatteringFunction', 'MDLRelativeAssetResolver', 'MDLScatteringFunction', 'MDLSkeleton', 'MDLSkyCubeTexture', 'MDLStereoscopicCamera', 'MDLSubmesh', 'MDLSubmeshTopology', 'MDLTexture', 'MDLTextureFilter', 'MDLTextureSampler', 'MDLTransform', 'MDLTransformMatrixOp', 'MDLTransformOrientOp', 'MDLTransformRotateOp', 'MDLTransformRotateXOp', 'MDLTransformRotateYOp', 'MDLTransformRotateZOp', 'MDLTransformScaleOp', 'MDLTransformStack', 'MDLTransformTranslateOp', 'MDLURLTexture', 'MDLVertexAttribute', 'MDLVertexAttributeData', 'MDLVertexBufferLayout', 'MDLVertexDescriptor', 'MDLVoxelArray', 'MFMailComposeViewController', 'MFMessageComposeViewController', 'MIDICIDeviceInfo', 'MIDICIDiscoveredNode', 'MIDICIDiscoveryManager', 'MIDICIProfile', 'MIDICIProfileState', 'MIDICIResponder', 'MIDICISession', 'MIDINetworkConnection', 'MIDINetworkHost', 'MIDINetworkSession', 'MKAnnotationView', 'MKCircle', 'MKCircleRenderer', 'MKCircleView', 'MKClusterAnnotation', 'MKCompassButton', 'MKDirections', 'MKDirectionsRequest', 'MKDirectionsResponse', 'MKDistanceFormatter', 'MKETAResponse', 'MKGeoJSONDecoder', 'MKGeoJSONFeature', 'MKGeodesicPolyline', 'MKGradientPolylineRenderer', 'MKLocalPointsOfInterestRequest', 'MKLocalSearch', 'MKLocalSearchCompleter', 'MKLocalSearchCompletion', 'MKLocalSearchRequest', 'MKLocalSearchResponse', 'MKMapCamera', 'MKMapCameraBoundary', 'MKMapCameraZoomRange', 'MKMapItem', 'MKMapSnapshot', 'MKMapSnapshotOptions', 'MKMapSnapshotter', 'MKMapView', 'MKMarkerAnnotationView', 'MKMultiPoint', 'MKMultiPolygon', 'MKMultiPolygonRenderer', 'MKMultiPolyline', 'MKMultiPolylineRenderer', 'MKOverlayPathRenderer', 'MKOverlayPathView', 'MKOverlayRenderer', 'MKOverlayView', 'MKPinAnnotationView', 'MKPitchControl', 'MKPlacemark', 'MKPointAnnotation', 'MKPointOfInterestFilter', 'MKPolygon', 'MKPolygonRenderer', 'MKPolygonView', 'MKPolyline', 'MKPolylineRenderer', 'MKPolylineView', 'MKReverseGeocoder', 'MKRoute', 'MKRouteStep', 'MKScaleView', 'MKShape', 'MKTileOverlay', 'MKTileOverlayRenderer', 'MKUserLocation', 'MKUserLocationView', 'MKUserTrackingBarButtonItem', 'MKUserTrackingButton', 'MKZoomControl', 'MLArrayBatchProvider', 'MLCActivationDescriptor', 'MLCActivationLayer', 'MLCArithmeticLayer', 'MLCBatchNormalizationLayer', 'MLCConcatenationLayer', 'MLCConvolutionDescriptor', 'MLCConvolutionLayer', 'MLCDevice', 'MLCDropoutLayer', 'MLCEmbeddingDescriptor', 'MLCEmbeddingLayer', 'MLCFullyConnectedLayer', 'MLCGramMatrixLayer', 'MLCGraph', 'MLCGroupNormalizationLayer', 'MLCInferenceGraph', 'MLCInstanceNormalizationLayer', 'MLCLSTMDescriptor', 'MLCLSTMLayer', 'MLCLayer', 'MLCLayerNormalizationLayer', 'MLCLossDescriptor', 'MLCLossLayer', 'MLCMatMulDescriptor', 'MLCMatMulLayer', 'MLCMultiheadAttentionDescriptor', 'MLCMultiheadAttentionLayer', 'MLCPaddingLayer', 'MLCPoolingDescriptor', 'MLCPoolingLayer', 'MLCReductionLayer', 'MLCReshapeLayer', 'MLCSliceLayer', 'MLCSoftmaxLayer', 'MLCSplitLayer', 'MLCTensor', 'MLCTensorData', 'MLCTensorDescriptor', 'MLCTensorOptimizerDeviceData', 'MLCTensorParameter', 'MLCTrainingGraph', 'MLCTransposeLayer', 'MLCUpsampleLayer', 'MLCYOLOLossDescriptor', 'MLCYOLOLossLayer', 'MLDictionaryConstraint', 'MLDictionaryFeatureProvider', 'MLFeatureDescription', 'MLFeatureValue', 'MLImageConstraint', 'MLImageSize', 'MLImageSizeConstraint', 'MLKey', 'MLMetricKey', 'MLModel', 'MLModelCollection', 'MLModelCollectionEntry', 'MLModelConfiguration', 'MLModelDescription', 'MLMultiArray', 'MLMultiArrayConstraint', 'MLMultiArrayShapeConstraint', 'MLNumericConstraint', 'MLParameterDescription', 'MLParameterKey', 'MLPredictionOptions', 'MLSequence', 'MLSequenceConstraint', 'MLTask', 'MLUpdateContext', 'MLUpdateProgressHandlers', 'MLUpdateTask', 'MPChangeLanguageOptionCommandEvent', 'MPChangePlaybackPositionCommand', 'MPChangePlaybackPositionCommandEvent', 'MPChangePlaybackRateCommand', 'MPChangePlaybackRateCommandEvent', 'MPChangeRepeatModeCommand', 'MPChangeRepeatModeCommandEvent', 'MPChangeShuffleModeCommand', 'MPChangeShuffleModeCommandEvent', 'MPContentItem', 'MPFeedbackCommand', 'MPFeedbackCommandEvent', 'MPMediaEntity', 'MPMediaItem', 'MPMediaItemArtwork', 'MPMediaItemCollection', 'MPMediaLibrary', 'MPMediaPickerController', 'MPMediaPlaylist', 'MPMediaPlaylistCreationMetadata', 'MPMediaPredicate', 'MPMediaPropertyPredicate', 'MPMediaQuery', 'MPMediaQuerySection', 'MPMovieAccessLog', 'MPMovieAccessLogEvent', 'MPMovieErrorLog', 'MPMovieErrorLogEvent', 'MPMoviePlayerController', 'MPMoviePlayerViewController', 'MPMusicPlayerApplicationController', 'MPMusicPlayerController', 'MPMusicPlayerControllerMutableQueue', 'MPMusicPlayerControllerQueue', 'MPMusicPlayerMediaItemQueueDescriptor', 'MPMusicPlayerPlayParameters', 'MPMusicPlayerPlayParametersQueueDescriptor', 'MPMusicPlayerQueueDescriptor', 'MPMusicPlayerStoreQueueDescriptor', 'MPNowPlayingInfoCenter', 'MPNowPlayingInfoLanguageOption', 'MPNowPlayingInfoLanguageOptionGroup', 'MPNowPlayingSession', 'MPPlayableContentManager', 'MPPlayableContentManagerContext', 'MPRatingCommand', 'MPRatingCommandEvent', 'MPRemoteCommand', 'MPRemoteCommandCenter', 'MPRemoteCommandEvent', 'MPSGraph', 'MPSGraphConvolution2DOpDescriptor', 'MPSGraphDepthwiseConvolution2DOpDescriptor', 'MPSGraphDevice', 'MPSGraphExecutionDescriptor', 'MPSGraphOperation', 'MPSGraphPooling2DOpDescriptor', 'MPSGraphShapedType', 'MPSGraphTensor', 'MPSGraphTensorData', 'MPSGraphVariableOp', 'MPSeekCommandEvent', 'MPSkipIntervalCommand', 'MPSkipIntervalCommandEvent', 'MPTimedMetadata', 'MPVolumeView', 'MSConversation', 'MSMessage', 'MSMessageLayout', 'MSMessageLiveLayout', 'MSMessageTemplateLayout', 'MSMessagesAppViewController', 'MSServiceAccount', 'MSSession', 'MSSetupSession', 'MSSticker', 'MSStickerBrowserView', 'MSStickerBrowserViewController', 'MSStickerView', 'MTKMesh', 'MTKMeshBuffer', 'MTKMeshBufferAllocator', 'MTKSubmesh', 'MTKTextureLoader', 'MTKView', 'MTLAccelerationStructureBoundingBoxGeometryDescriptor', 'MTLAccelerationStructureDescriptor', 'MTLAccelerationStructureGeometryDescriptor', 'MTLAccelerationStructureTriangleGeometryDescriptor', 'MTLArgument', 'MTLArgumentDescriptor', 'MTLArrayType', 'MTLAttribute', 'MTLAttributeDescriptor', 'MTLAttributeDescriptorArray', 'MTLBinaryArchiveDescriptor', 'MTLBlitPassDescriptor', 'MTLBlitPassSampleBufferAttachmentDescriptor', 'MTLBlitPassSampleBufferAttachmentDescriptorArray', 'MTLBufferLayoutDescriptor', 'MTLBufferLayoutDescriptorArray', 'MTLCaptureDescriptor', 'MTLCaptureManager', 'MTLCommandBufferDescriptor', 'MTLCompileOptions', 'MTLComputePassDescriptor', 'MTLComputePassSampleBufferAttachmentDescriptor', 'MTLComputePassSampleBufferAttachmentDescriptorArray', 'MTLComputePipelineDescriptor', 'MTLComputePipelineReflection', 'MTLCounterSampleBufferDescriptor', 'MTLDepthStencilDescriptor', 'MTLFunctionConstant', 'MTLFunctionConstantValues', 'MTLFunctionDescriptor', 'MTLHeapDescriptor', 'MTLIndirectCommandBufferDescriptor', 'MTLInstanceAccelerationStructureDescriptor', 'MTLIntersectionFunctionDescriptor', 'MTLIntersectionFunctionTableDescriptor', 'MTLLinkedFunctions', 'MTLPipelineBufferDescriptor', 'MTLPipelineBufferDescriptorArray', 'MTLPointerType', 'MTLPrimitiveAccelerationStructureDescriptor', 'MTLRasterizationRateLayerArray', 'MTLRasterizationRateLayerDescriptor', 'MTLRasterizationRateMapDescriptor', 'MTLRasterizationRateSampleArray', 'MTLRenderPassAttachmentDescriptor', 'MTLRenderPassColorAttachmentDescriptor', 'MTLRenderPassColorAttachmentDescriptorArray', 'MTLRenderPassDepthAttachmentDescriptor', 'MTLRenderPassDescriptor', 'MTLRenderPassSampleBufferAttachmentDescriptor', 'MTLRenderPassSampleBufferAttachmentDescriptorArray', 'MTLRenderPassStencilAttachmentDescriptor', 'MTLRenderPipelineColorAttachmentDescriptor', 'MTLRenderPipelineColorAttachmentDescriptorArray', 'MTLRenderPipelineDescriptor', 'MTLRenderPipelineReflection', 'MTLResourceStatePassDescriptor', 'MTLResourceStatePassSampleBufferAttachmentDescriptor', 'MTLResourceStatePassSampleBufferAttachmentDescriptorArray', 'MTLSamplerDescriptor', 'MTLSharedEventHandle', 'MTLSharedEventListener', 'MTLSharedTextureHandle', 'MTLStageInputOutputDescriptor', 'MTLStencilDescriptor', 'MTLStructMember', 'MTLStructType', 'MTLTextureDescriptor', 'MTLTextureReferenceType', 'MTLTileRenderPipelineColorAttachmentDescriptor', 'MTLTileRenderPipelineColorAttachmentDescriptorArray', 'MTLTileRenderPipelineDescriptor', 'MTLType', 'MTLVertexAttribute', 'MTLVertexAttributeDescriptor', 'MTLVertexAttributeDescriptorArray', 'MTLVertexBufferLayoutDescriptor', 'MTLVertexBufferLayoutDescriptorArray', 'MTLVertexDescriptor', 'MTLVisibleFunctionTableDescriptor', 'MXAnimationMetric', 'MXAppExitMetric', 'MXAppLaunchMetric', 'MXAppResponsivenessMetric', 'MXAppRunTimeMetric', 'MXAverage', 'MXBackgroundExitData', 'MXCPUExceptionDiagnostic', 'MXCPUMetric', 'MXCallStackTree', 'MXCellularConditionMetric', 'MXCrashDiagnostic', 'MXDiagnostic', 'MXDiagnosticPayload', 'MXDiskIOMetric', 'MXDiskWriteExceptionDiagnostic', 'MXDisplayMetric', 'MXForegroundExitData', 'MXGPUMetric', 'MXHangDiagnostic', 'MXHistogram', 'MXHistogramBucket', 'MXLocationActivityMetric', 'MXMemoryMetric', 'MXMetaData', 'MXMetric', 'MXMetricManager', 'MXMetricPayload', 'MXNetworkTransferMetric', 'MXSignpostIntervalData', 'MXSignpostMetric', 'MXUnitAveragePixelLuminance', 'MXUnitSignalBars', 'MyClass', 'NCWidgetController', 'NEAppProxyFlow', 'NEAppProxyProvider', 'NEAppProxyProviderManager', 'NEAppProxyTCPFlow', 'NEAppProxyUDPFlow', 'NEAppPushManager', 'NEAppPushProvider', 'NEAppRule', 'NEDNSOverHTTPSSettings', 'NEDNSOverTLSSettings', 'NEDNSProxyManager', 'NEDNSProxyProvider', 'NEDNSProxyProviderProtocol', 'NEDNSSettings', 'NEDNSSettingsManager', 'NEEvaluateConnectionRule', 'NEFilterBrowserFlow', 'NEFilterControlProvider', 'NEFilterControlVerdict', 'NEFilterDataProvider', 'NEFilterDataVerdict', 'NEFilterFlow', 'NEFilterManager', 'NEFilterNewFlowVerdict', 'NEFilterPacketContext', 'NEFilterPacketProvider', 'NEFilterProvider', 'NEFilterProviderConfiguration', 'NEFilterRemediationVerdict', 'NEFilterReport', 'NEFilterRule', 'NEFilterSettings', 'NEFilterSocketFlow', 'NEFilterVerdict', 'NEFlowMetaData', 'NEHotspotConfiguration', 'NEHotspotConfigurationManager', 'NEHotspotEAPSettings', 'NEHotspotHS20Settings', 'NEHotspotHelper', 'NEHotspotHelperCommand', 'NEHotspotHelperResponse', 'NEHotspotNetwork', 'NEIPv4Route', 'NEIPv4Settings', 'NEIPv6Route', 'NEIPv6Settings', 'NENetworkRule', 'NEOnDemandRule', 'NEOnDemandRuleConnect', 'NEOnDemandRuleDisconnect', 'NEOnDemandRuleEvaluateConnection', 'NEOnDemandRuleIgnore', 'NEPacket', 'NEPacketTunnelFlow', 'NEPacketTunnelNetworkSettings', 'NEPacketTunnelProvider', 'NEProvider', 'NEProxyServer', 'NEProxySettings', 'NETransparentProxyManager', 'NETransparentProxyNetworkSettings', 'NETransparentProxyProvider', 'NETunnelNetworkSettings', 'NETunnelProvider', 'NETunnelProviderManager', 'NETunnelProviderProtocol', 'NETunnelProviderSession', 'NEVPNConnection', 'NEVPNIKEv2SecurityAssociationParameters', 'NEVPNManager', 'NEVPNProtocol', 'NEVPNProtocolIKEv2', 'NEVPNProtocolIPSec', 'NFCISO15693CustomCommandConfiguration', 'NFCISO15693ReadMultipleBlocksConfiguration', 'NFCISO15693ReaderSession', 'NFCISO7816APDU', 'NFCNDEFMessage', 'NFCNDEFPayload', 'NFCNDEFReaderSession', 'NFCReaderSession', 'NFCTagCommandConfiguration', 'NFCTagReaderSession', 'NFCVASCommandConfiguration', 'NFCVASReaderSession', 'NFCVASResponse', 'NIConfiguration', 'NIDiscoveryToken', 'NINearbyObject', 'NINearbyPeerConfiguration', 'NISession', 'NKAssetDownload', 'NKIssue', 'NKLibrary', 'NLEmbedding', 'NLGazetteer', 'NLLanguageRecognizer', 'NLModel', 'NLModelConfiguration', 'NLTagger', 'NLTokenizer', 'NSArray', 'NSAssertionHandler', 'NSAsynchronousFetchRequest', 'NSAsynchronousFetchResult', 'NSAtomicStore', 'NSAtomicStoreCacheNode', 'NSAttributeDescription', 'NSAttributedString', 'NSAutoreleasePool', 'NSBatchDeleteRequest', 'NSBatchDeleteResult', 'NSBatchInsertRequest', 'NSBatchInsertResult', 'NSBatchUpdateRequest', 'NSBatchUpdateResult', 'NSBlockOperation', 'NSBundle', 'NSBundleResourceRequest', 'NSByteCountFormatter', 'NSCache', 'NSCachedURLResponse', 'NSCalendar', 'NSCharacterSet', 'NSCoder', 'NSCollectionLayoutAnchor', 'NSCollectionLayoutBoundarySupplementaryItem', 'NSCollectionLayoutDecorationItem', 'NSCollectionLayoutDimension', 'NSCollectionLayoutEdgeSpacing', 'NSCollectionLayoutGroup', 'NSCollectionLayoutGroupCustomItem', 'NSCollectionLayoutItem', 'NSCollectionLayoutSection', 'NSCollectionLayoutSize', 'NSCollectionLayoutSpacing', 'NSCollectionLayoutSupplementaryItem', 'NSComparisonPredicate', 'NSCompoundPredicate', 'NSCondition', 'NSConditionLock', 'NSConstantString', 'NSConstraintConflict', 'NSCoreDataCoreSpotlightDelegate', 'NSCountedSet', 'NSData', 'NSDataAsset', 'NSDataDetector', 'NSDate', 'NSDateComponents', 'NSDateComponentsFormatter', 'NSDateFormatter', 'NSDateInterval', 'NSDateIntervalFormatter', 'NSDecimalNumber', 'NSDecimalNumberHandler', 'NSDerivedAttributeDescription', 'NSDictionary', 'NSDiffableDataSourceSectionSnapshot', 'NSDiffableDataSourceSectionTransaction', 'NSDiffableDataSourceSnapshot', 'NSDiffableDataSourceTransaction', 'NSDimension', 'NSDirectoryEnumerator', 'NSEnergyFormatter', 'NSEntityDescription', 'NSEntityMapping', 'NSEntityMigrationPolicy', 'NSEnumerator', 'NSError', 'NSEvent', 'NSException', 'NSExpression', 'NSExpressionDescription', 'NSExtensionContext', 'NSExtensionItem', 'NSFetchIndexDescription', 'NSFetchIndexElementDescription', 'NSFetchRequest', 'NSFetchRequestExpression', 'NSFetchedPropertyDescription', 'NSFetchedResultsController', 'NSFileAccessIntent', 'NSFileCoordinator', 'NSFileHandle', 'NSFileManager', 'NSFileProviderDomain', 'NSFileProviderExtension', 'NSFileProviderManager', 'NSFileProviderService', 'NSFileSecurity', 'NSFileVersion', 'NSFileWrapper', 'NSFormatter', 'NSHTTPCookie', 'NSHTTPCookieStorage', 'NSHTTPURLResponse', 'NSHashTable', 'NSISO8601DateFormatter', 'NSIncrementalStore', 'NSIncrementalStoreNode', 'NSIndexPath', 'NSIndexSet', 'NSInputStream', 'NSInvocation', 'NSInvocationOperation', 'NSItemProvider', 'NSJSONSerialization', 'NSKeyedArchiver', 'NSKeyedUnarchiver', 'NSLayoutAnchor', 'NSLayoutConstraint', 'NSLayoutDimension', 'NSLayoutManager', 'NSLayoutXAxisAnchor', 'NSLayoutYAxisAnchor', 'NSLengthFormatter', 'NSLinguisticTagger', 'NSListFormatter', 'NSLocale', 'NSLock', 'NSMachPort', 'NSManagedObject', 'NSManagedObjectContext', 'NSManagedObjectID', 'NSManagedObjectModel', 'NSMapTable', 'NSMappingModel', 'NSMassFormatter', 'NSMeasurement', 'NSMeasurementFormatter', 'NSMenuToolbarItem', 'NSMergeConflict', 'NSMergePolicy', 'NSMessagePort', 'NSMetadataItem', 'NSMetadataQuery', 'NSMetadataQueryAttributeValueTuple', 'NSMetadataQueryResultGroup', 'NSMethodSignature', 'NSMigrationManager', 'NSMutableArray', 'NSMutableAttributedString', 'NSMutableCharacterSet', 'NSMutableData', 'NSMutableDictionary', 'NSMutableIndexSet', 'NSMutableOrderedSet', 'NSMutableParagraphStyle', 'NSMutableSet', 'NSMutableString', 'NSMutableURLRequest', 'NSNetService', 'NSNetServiceBrowser', 'NSNotification', 'NSNotificationCenter', 'NSNotificationQueue', 'NSNull', 'NSNumber', 'NSNumberFormatter', 'NSObject', 'NSOperation', 'NSOperationQueue', 'NSOrderedCollectionChange', 'NSOrderedCollectionDifference', 'NSOrderedSet', 'NSOrthography', 'NSOutputStream', 'NSParagraphStyle', 'NSPersistentCloudKitContainer', 'NSPersistentCloudKitContainerEvent', 'NSPersistentCloudKitContainerEventRequest', 'NSPersistentCloudKitContainerEventResult', 'NSPersistentCloudKitContainerOptions', 'NSPersistentContainer', 'NSPersistentHistoryChange', 'NSPersistentHistoryChangeRequest', 'NSPersistentHistoryResult', 'NSPersistentHistoryToken', 'NSPersistentHistoryTransaction', 'NSPersistentStore', 'NSPersistentStoreAsynchronousResult', 'NSPersistentStoreCoordinator', 'NSPersistentStoreDescription', 'NSPersistentStoreRequest', 'NSPersistentStoreResult', 'NSPersonNameComponents', 'NSPersonNameComponentsFormatter', 'NSPipe', 'NSPointerArray', 'NSPointerFunctions', 'NSPort', 'NSPredicate', 'NSProcessInfo', 'NSProgress', 'NSPropertyDescription', 'NSPropertyListSerialization', 'NSPropertyMapping', 'NSProxy', 'NSPurgeableData', 'NSQueryGenerationToken', 'NSRecursiveLock', 'NSRegularExpression', 'NSRelationshipDescription', 'NSRelativeDateTimeFormatter', 'NSRunLoop', 'NSSaveChangesRequest', 'NSScanner', 'NSSecureUnarchiveFromDataTransformer', 'NSSet', 'NSShadow', 'NSSharingServicePickerToolbarItem', 'NSSharingServicePickerTouchBarItem', 'NSSimpleCString', 'NSSocketPort', 'NSSortDescriptor', 'NSStream', 'NSString', 'NSStringDrawingContext', 'NSTextAttachment', 'NSTextCheckingResult', 'NSTextContainer', 'NSTextStorage', 'NSTextTab', 'NSThread', 'NSTimeZone', 'NSTimer', 'NSToolbarItem', 'NSURL', 'NSURLAuthenticationChallenge', 'NSURLCache', 'NSURLComponents', 'NSURLConnection', 'NSURLCredential', 'NSURLCredentialStorage', 'NSURLProtectionSpace', 'NSURLProtocol', 'NSURLQueryItem', 'NSURLRequest', 'NSURLResponse', 'NSURLSession', 'NSURLSessionConfiguration', 'NSURLSessionDataTask', 'NSURLSessionDownloadTask', 'NSURLSessionStreamTask', 'NSURLSessionTask', 'NSURLSessionTaskMetrics', 'NSURLSessionTaskTransactionMetrics', 'NSURLSessionUploadTask', 'NSURLSessionWebSocketMessage', 'NSURLSessionWebSocketTask', 'NSUUID', 'NSUbiquitousKeyValueStore', 'NSUndoManager', 'NSUnit', 'NSUnitAcceleration', 'NSUnitAngle', 'NSUnitArea', 'NSUnitConcentrationMass', 'NSUnitConverter', 'NSUnitConverterLinear', 'NSUnitDispersion', 'NSUnitDuration', 'NSUnitElectricCharge', 'NSUnitElectricCurrent', 'NSUnitElectricPotentialDifference', 'NSUnitElectricResistance', 'NSUnitEnergy', 'NSUnitFrequency', 'NSUnitFuelEfficiency', 'NSUnitIlluminance', 'NSUnitInformationStorage', 'NSUnitLength', 'NSUnitMass', 'NSUnitPower', 'NSUnitPressure', 'NSUnitSpeed', 'NSUnitTemperature', 'NSUnitVolume', 'NSUserActivity', 'NSUserDefaults', 'NSValue', 'NSValueTransformer', 'NSXMLParser', 'NSXPCCoder', 'NSXPCConnection', 'NSXPCInterface', 'NSXPCListener', 'NSXPCListenerEndpoint', 'NWBonjourServiceEndpoint', 'NWEndpoint', 'NWHostEndpoint', 'NWPath', 'NWTCPConnection', 'NWTLSParameters', 'NWUDPSession', 'OSLogEntry', 'OSLogEntryActivity', 'OSLogEntryBoundary', 'OSLogEntryLog', 'OSLogEntrySignpost', 'OSLogEnumerator', 'OSLogMessageComponent', 'OSLogPosition', 'OSLogStore', 'PDFAction', 'PDFActionGoTo', 'PDFActionNamed', 'PDFActionRemoteGoTo', 'PDFActionResetForm', 'PDFActionURL', 'PDFAnnotation', 'PDFAppearanceCharacteristics', 'PDFBorder', 'PDFDestination', 'PDFDocument', 'PDFOutline', 'PDFPage', 'PDFSelection', 'PDFThumbnailView', 'PDFView', 'PHAdjustmentData', 'PHAsset', 'PHAssetChangeRequest', 'PHAssetCollection', 'PHAssetCollectionChangeRequest', 'PHAssetCreationRequest', 'PHAssetResource', 'PHAssetResourceCreationOptions', 'PHAssetResourceManager', 'PHAssetResourceRequestOptions', 'PHCachingImageManager', 'PHChange', 'PHChangeRequest', 'PHCloudIdentifier', 'PHCollection', 'PHCollectionList', 'PHCollectionListChangeRequest', 'PHContentEditingInput', 'PHContentEditingInputRequestOptions', 'PHContentEditingOutput', 'PHEditingExtensionContext', 'PHFetchOptions', 'PHFetchResult', 'PHFetchResultChangeDetails', 'PHImageManager', 'PHImageRequestOptions', 'PHLivePhoto', 'PHLivePhotoEditingContext', 'PHLivePhotoRequestOptions', 'PHLivePhotoView', 'PHObject', 'PHObjectChangeDetails', 'PHObjectPlaceholder', 'PHPhotoLibrary', 'PHPickerConfiguration', 'PHPickerFilter', 'PHPickerResult', 'PHPickerViewController', 'PHProject', 'PHProjectChangeRequest', 'PHVideoRequestOptions', 'PKAddCarKeyPassConfiguration', 'PKAddPassButton', 'PKAddPassesViewController', 'PKAddPaymentPassRequest', 'PKAddPaymentPassRequestConfiguration', 'PKAddPaymentPassViewController', 'PKAddSecureElementPassConfiguration', 'PKAddSecureElementPassViewController', 'PKAddShareablePassConfiguration', 'PKBarcodeEventConfigurationRequest', 'PKBarcodeEventMetadataRequest', 'PKBarcodeEventMetadataResponse', 'PKBarcodeEventSignatureRequest', 'PKBarcodeEventSignatureResponse', 'PKCanvasView', 'PKContact', 'PKDisbursementAuthorizationController', 'PKDisbursementRequest', 'PKDisbursementVoucher', 'PKDrawing', 'PKEraserTool', 'PKFloatRange', 'PKInk', 'PKInkingTool', 'PKIssuerProvisioningExtensionHandler', 'PKIssuerProvisioningExtensionPassEntry', 'PKIssuerProvisioningExtensionPaymentPassEntry', 'PKIssuerProvisioningExtensionStatus', 'PKLabeledValue', 'PKLassoTool', 'PKObject', 'PKPass', 'PKPassLibrary', 'PKPayment', 'PKPaymentAuthorizationController', 'PKPaymentAuthorizationResult', 'PKPaymentAuthorizationViewController', 'PKPaymentButton', 'PKPaymentInformationEventExtension', 'PKPaymentMerchantSession', 'PKPaymentMethod', 'PKPaymentPass', 'PKPaymentRequest', 'PKPaymentRequestMerchantSessionUpdate', 'PKPaymentRequestPaymentMethodUpdate', 'PKPaymentRequestShippingContactUpdate', 'PKPaymentRequestShippingMethodUpdate', 'PKPaymentRequestUpdate', 'PKPaymentSummaryItem', 'PKPaymentToken', 'PKPushCredentials', 'PKPushPayload', 'PKPushRegistry', 'PKSecureElementPass', 'PKShareablePassMetadata', 'PKShippingMethod', 'PKStroke', 'PKStrokePath', 'PKStrokePoint', 'PKSuicaPassProperties', 'PKTool', 'PKToolPicker', 'PKTransitPassProperties', 'QLFileThumbnailRequest', 'QLPreviewController', 'QLThumbnailGenerationRequest', 'QLThumbnailGenerator', 'QLThumbnailProvider', 'QLThumbnailReply', 'QLThumbnailRepresentation', 'RPBroadcastActivityController', 'RPBroadcastActivityViewController', 'RPBroadcastConfiguration', 'RPBroadcastController', 'RPBroadcastHandler', 'RPBroadcastMP4ClipHandler', 'RPBroadcastSampleHandler', 'RPPreviewViewController', 'RPScreenRecorder', 'RPSystemBroadcastPickerView', 'SCNAccelerationConstraint', 'SCNAction', 'SCNAnimation', 'SCNAnimationEvent', 'SCNAnimationPlayer', 'SCNAudioPlayer', 'SCNAudioSource', 'SCNAvoidOccluderConstraint', 'SCNBillboardConstraint', 'SCNBox', 'SCNCamera', 'SCNCameraController', 'SCNCapsule', 'SCNCone', 'SCNConstraint', 'SCNCylinder', 'SCNDistanceConstraint', 'SCNFloor', 'SCNGeometry', 'SCNGeometryElement', 'SCNGeometrySource', 'SCNGeometryTessellator', 'SCNHitTestResult', 'SCNIKConstraint', 'SCNLevelOfDetail', 'SCNLight', 'SCNLookAtConstraint', 'SCNMaterial', 'SCNMaterialProperty', 'SCNMorpher', 'SCNNode', 'SCNParticlePropertyController', 'SCNParticleSystem', 'SCNPhysicsBallSocketJoint', 'SCNPhysicsBehavior', 'SCNPhysicsBody', 'SCNPhysicsConeTwistJoint', 'SCNPhysicsContact', 'SCNPhysicsField', 'SCNPhysicsHingeJoint', 'SCNPhysicsShape', 'SCNPhysicsSliderJoint', 'SCNPhysicsVehicle', 'SCNPhysicsVehicleWheel', 'SCNPhysicsWorld', 'SCNPlane', 'SCNProgram', 'SCNPyramid', 'SCNReferenceNode', 'SCNRenderer', 'SCNReplicatorConstraint', 'SCNScene', 'SCNSceneSource', 'SCNShape', 'SCNSkinner', 'SCNSliderConstraint', 'SCNSphere', 'SCNTechnique', 'SCNText', 'SCNTimingFunction', 'SCNTorus', 'SCNTransaction', 'SCNTransformConstraint', 'SCNTube', 'SCNView', 'SFAcousticFeature', 'SFAuthenticationSession', 'SFContentBlockerManager', 'SFContentBlockerState', 'SFSafariViewController', 'SFSafariViewControllerConfiguration', 'SFSpeechAudioBufferRecognitionRequest', 'SFSpeechRecognitionRequest', 'SFSpeechRecognitionResult', 'SFSpeechRecognitionTask', 'SFSpeechRecognizer', 'SFSpeechURLRecognitionRequest', 'SFTranscription', 'SFTranscriptionSegment', 'SFVoiceAnalytics', 'SK3DNode', 'SKAction', 'SKAdNetwork', 'SKArcadeService', 'SKAttribute', 'SKAttributeValue', 'SKAudioNode', 'SKCameraNode', 'SKCloudServiceController', 'SKCloudServiceSetupViewController', 'SKConstraint', 'SKCropNode', 'SKDownload', 'SKEffectNode', 'SKEmitterNode', 'SKFieldNode', 'SKKeyframeSequence', 'SKLabelNode', 'SKLightNode', 'SKMutablePayment', 'SKMutableTexture', 'SKNode', 'SKOverlay', 'SKOverlayAppClipConfiguration', 'SKOverlayAppConfiguration', 'SKOverlayConfiguration', 'SKOverlayTransitionContext', 'SKPayment', 'SKPaymentDiscount', 'SKPaymentQueue', 'SKPaymentTransaction', 'SKPhysicsBody', 'SKPhysicsContact', 'SKPhysicsJoint', 'SKPhysicsJointFixed', 'SKPhysicsJointLimit', 'SKPhysicsJointPin', 'SKPhysicsJointSliding', 'SKPhysicsJointSpring', 'SKPhysicsWorld', 'SKProduct', 'SKProductDiscount', 'SKProductStorePromotionController', 'SKProductSubscriptionPeriod', 'SKProductsRequest', 'SKProductsResponse', 'SKRange', 'SKReachConstraints', 'SKReceiptRefreshRequest', 'SKReferenceNode', 'SKRegion', 'SKRenderer', 'SKRequest', 'SKScene', 'SKShader', 'SKShapeNode', 'SKSpriteNode', 'SKStoreProductViewController', 'SKStoreReviewController', 'SKStorefront', 'SKTexture', 'SKTextureAtlas', 'SKTileDefinition', 'SKTileGroup', 'SKTileGroupRule', 'SKTileMapNode', 'SKTileSet', 'SKTransformNode', 'SKTransition', 'SKUniform', 'SKVideoNode', 'SKView', 'SKWarpGeometry', 'SKWarpGeometryGrid', 'SLComposeServiceViewController', 'SLComposeSheetConfigurationItem', 'SLComposeViewController', 'SLRequest', 'SNAudioFileAnalyzer', 'SNAudioStreamAnalyzer', 'SNClassification', 'SNClassificationResult', 'SNClassifySoundRequest', 'SRAmbientLightSample', 'SRApplicationUsage', 'SRDeletionRecord', 'SRDevice', 'SRDeviceUsageReport', 'SRFetchRequest', 'SRFetchResult', 'SRKeyboardMetrics', 'SRKeyboardProbabilityMetric', 'SRMessagesUsageReport', 'SRNotificationUsage', 'SRPhoneUsageReport', 'SRSensorReader', 'SRVisit', 'SRWebUsage', 'SRWristDetection', 'SSReadingList', 'STScreenTimeConfiguration', 'STScreenTimeConfigurationObserver', 'STWebHistory', 'STWebpageController', 'TKBERTLVRecord', 'TKCompactTLVRecord', 'TKSimpleTLVRecord', 'TKSmartCard', 'TKSmartCardATR', 'TKSmartCardATRInterfaceGroup', 'TKSmartCardPINFormat', 'TKSmartCardSlot', 'TKSmartCardSlotManager', 'TKSmartCardToken', 'TKSmartCardTokenDriver', 'TKSmartCardTokenSession', 'TKSmartCardUserInteraction', 'TKSmartCardUserInteractionForPINOperation', 'TKSmartCardUserInteractionForSecurePINChange', 'TKSmartCardUserInteractionForSecurePINVerification', 'TKTLVRecord', 'TKToken', 'TKTokenAuthOperation', 'TKTokenConfiguration', 'TKTokenDriver', 'TKTokenDriverConfiguration', 'TKTokenKeyAlgorithm', 'TKTokenKeyExchangeParameters', 'TKTokenKeychainCertificate', 'TKTokenKeychainContents', 'TKTokenKeychainItem', 'TKTokenKeychainKey', 'TKTokenPasswordAuthOperation', 'TKTokenSession', 'TKTokenSmartCardPINAuthOperation', 'TKTokenWatcher', 'TWRequest', 'TWTweetComposeViewController', 'UIAcceleration', 'UIAccelerometer', 'UIAccessibilityCustomAction', 'UIAccessibilityCustomRotor', 'UIAccessibilityCustomRotorItemResult', 'UIAccessibilityCustomRotorSearchPredicate', 'UIAccessibilityElement', 'UIAccessibilityLocationDescriptor', 'UIAction', 'UIActionSheet', 'UIActivity', 'UIActivityIndicatorView', 'UIActivityItemProvider', 'UIActivityItemsConfiguration', 'UIActivityViewController', 'UIAlertAction', 'UIAlertController', 'UIAlertView', 'UIApplication', 'UIApplicationShortcutIcon', 'UIApplicationShortcutItem', 'UIAttachmentBehavior', 'UIBackgroundConfiguration', 'UIBarAppearance', 'UIBarButtonItem', 'UIBarButtonItemAppearance', 'UIBarButtonItemGroup', 'UIBarButtonItemStateAppearance', 'UIBarItem', 'UIBezierPath', 'UIBlurEffect', 'UIButton', 'UICellAccessory', 'UICellAccessoryCheckmark', 'UICellAccessoryCustomView', 'UICellAccessoryDelete', 'UICellAccessoryDisclosureIndicator', 'UICellAccessoryInsert', 'UICellAccessoryLabel', 'UICellAccessoryMultiselect', 'UICellAccessoryOutlineDisclosure', 'UICellAccessoryReorder', 'UICellConfigurationState', 'UICloudSharingController', 'UICollectionLayoutListConfiguration', 'UICollectionReusableView', 'UICollectionView', 'UICollectionViewCell', 'UICollectionViewCellRegistration', 'UICollectionViewCompositionalLayout', 'UICollectionViewCompositionalLayoutConfiguration', 'UICollectionViewController', 'UICollectionViewDiffableDataSource', 'UICollectionViewDiffableDataSourceReorderingHandlers', 'UICollectionViewDiffableDataSourceSectionSnapshotHandlers', 'UICollectionViewDropPlaceholder', 'UICollectionViewDropProposal', 'UICollectionViewFlowLayout', 'UICollectionViewFlowLayoutInvalidationContext', 'UICollectionViewFocusUpdateContext', 'UICollectionViewLayout', 'UICollectionViewLayoutAttributes', 'UICollectionViewLayoutInvalidationContext', 'UICollectionViewListCell', 'UICollectionViewPlaceholder', 'UICollectionViewSupplementaryRegistration', 'UICollectionViewTransitionLayout', 'UICollectionViewUpdateItem', 'UICollisionBehavior', 'UIColor', 'UIColorPickerViewController', 'UIColorWell', 'UICommand', 'UICommandAlternate', 'UIContextMenuConfiguration', 'UIContextMenuInteraction', 'UIContextualAction', 'UIControl', 'UICubicTimingParameters', 'UIDatePicker', 'UIDeferredMenuElement', 'UIDevice', 'UIDictationPhrase', 'UIDocument', 'UIDocumentBrowserAction', 'UIDocumentBrowserTransitionController', 'UIDocumentBrowserViewController', 'UIDocumentInteractionController', 'UIDocumentMenuViewController', 'UIDocumentPickerExtensionViewController', 'UIDocumentPickerViewController', 'UIDragInteraction', 'UIDragItem', 'UIDragPreview', 'UIDragPreviewParameters', 'UIDragPreviewTarget', 'UIDropInteraction', 'UIDropProposal', 'UIDynamicAnimator', 'UIDynamicBehavior', 'UIDynamicItemBehavior', 'UIDynamicItemGroup', 'UIEvent', 'UIFeedbackGenerator', 'UIFieldBehavior', 'UIFocusAnimationCoordinator', 'UIFocusDebugger', 'UIFocusGuide', 'UIFocusMovementHint', 'UIFocusSystem', 'UIFocusUpdateContext', 'UIFont', 'UIFontDescriptor', 'UIFontMetrics', 'UIFontPickerViewController', 'UIFontPickerViewControllerConfiguration', 'UIGestureRecognizer', 'UIGraphicsImageRenderer', 'UIGraphicsImageRendererContext', 'UIGraphicsImageRendererFormat', 'UIGraphicsPDFRenderer', 'UIGraphicsPDFRendererContext', 'UIGraphicsPDFRendererFormat', 'UIGraphicsRenderer', 'UIGraphicsRendererContext', 'UIGraphicsRendererFormat', 'UIGravityBehavior', 'UIHoverGestureRecognizer', 'UIImage', 'UIImageAsset', 'UIImageConfiguration', 'UIImagePickerController', 'UIImageSymbolConfiguration', 'UIImageView', 'UIImpactFeedbackGenerator', 'UIIndirectScribbleInteraction', 'UIInputView', 'UIInputViewController', 'UIInterpolatingMotionEffect', 'UIKey', 'UIKeyCommand', 'UILabel', 'UILargeContentViewerInteraction', 'UILayoutGuide', 'UILexicon', 'UILexiconEntry', 'UIListContentConfiguration', 'UIListContentImageProperties', 'UIListContentTextProperties', 'UIListContentView', 'UILocalNotification', 'UILocalizedIndexedCollation', 'UILongPressGestureRecognizer', 'UIManagedDocument', 'UIMarkupTextPrintFormatter', 'UIMenu', 'UIMenuController', 'UIMenuElement', 'UIMenuItem', 'UIMenuSystem', 'UIMotionEffect', 'UIMotionEffectGroup', 'UIMutableApplicationShortcutItem', 'UIMutableUserNotificationAction', 'UIMutableUserNotificationCategory', 'UINavigationBar', 'UINavigationBarAppearance', 'UINavigationController', 'UINavigationItem', 'UINib', 'UINotificationFeedbackGenerator', 'UIOpenURLContext', 'UIPageControl', 'UIPageViewController', 'UIPanGestureRecognizer', 'UIPasteConfiguration', 'UIPasteboard', 'UIPencilInteraction', 'UIPercentDrivenInteractiveTransition', 'UIPickerView', 'UIPinchGestureRecognizer', 'UIPointerEffect', 'UIPointerHighlightEffect', 'UIPointerHoverEffect', 'UIPointerInteraction', 'UIPointerLiftEffect', 'UIPointerLockState', 'UIPointerRegion', 'UIPointerRegionRequest', 'UIPointerShape', 'UIPointerStyle', 'UIPopoverBackgroundView', 'UIPopoverController', 'UIPopoverPresentationController', 'UIPresentationController', 'UIPress', 'UIPressesEvent', 'UIPreviewAction', 'UIPreviewActionGroup', 'UIPreviewInteraction', 'UIPreviewParameters', 'UIPreviewTarget', 'UIPrintFormatter', 'UIPrintInfo', 'UIPrintInteractionController', 'UIPrintPageRenderer', 'UIPrintPaper', 'UIPrinter', 'UIPrinterPickerController', 'UIProgressView', 'UIPushBehavior', 'UIReferenceLibraryViewController', 'UIRefreshControl', 'UIRegion', 'UIResponder', 'UIRotationGestureRecognizer', 'UIScene', 'UISceneActivationConditions', 'UISceneActivationRequestOptions', 'UISceneConfiguration', 'UISceneConnectionOptions', 'UISceneDestructionRequestOptions', 'UISceneOpenExternalURLOptions', 'UISceneOpenURLOptions', 'UISceneSession', 'UISceneSizeRestrictions', 'UIScreen', 'UIScreenEdgePanGestureRecognizer', 'UIScreenMode', 'UIScreenshotService', 'UIScribbleInteraction', 'UIScrollView', 'UISearchBar', 'UISearchContainerViewController', 'UISearchController', 'UISearchDisplayController', 'UISearchSuggestionItem', 'UISearchTextField', 'UISearchToken', 'UISegmentedControl', 'UISelectionFeedbackGenerator', 'UISimpleTextPrintFormatter', 'UISlider', 'UISnapBehavior', 'UISplitViewController', 'UISpringLoadedInteraction', 'UISpringTimingParameters', 'UIStackView', 'UIStatusBarManager', 'UIStepper', 'UIStoryboard', 'UIStoryboardPopoverSegue', 'UIStoryboardSegue', 'UIStoryboardUnwindSegueSource', 'UISwipeActionsConfiguration', 'UISwipeGestureRecognizer', 'UISwitch', 'UITabBar', 'UITabBarAppearance', 'UITabBarController', 'UITabBarItem', 'UITabBarItemAppearance', 'UITabBarItemStateAppearance', 'UITableView', 'UITableViewCell', 'UITableViewController', 'UITableViewDiffableDataSource', 'UITableViewDropPlaceholder', 'UITableViewDropProposal', 'UITableViewFocusUpdateContext', 'UITableViewHeaderFooterView', 'UITableViewPlaceholder', 'UITableViewRowAction', 'UITapGestureRecognizer', 'UITargetedDragPreview', 'UITargetedPreview', 'UITextChecker', 'UITextDragPreviewRenderer', 'UITextDropProposal', 'UITextField', 'UITextFormattingCoordinator', 'UITextInputAssistantItem', 'UITextInputMode', 'UITextInputPasswordRules', 'UITextInputStringTokenizer', 'UITextInteraction', 'UITextPlaceholder', 'UITextPosition', 'UITextRange', 'UITextSelectionRect', 'UITextView', 'UITitlebar', 'UIToolbar', 'UIToolbarAppearance', 'UITouch', 'UITraitCollection', 'UIUserNotificationAction', 'UIUserNotificationCategory', 'UIUserNotificationSettings', 'UIVibrancyEffect', 'UIVideoEditorController', 'UIView', 'UIViewConfigurationState', 'UIViewController', 'UIViewPrintFormatter', 'UIViewPropertyAnimator', 'UIVisualEffect', 'UIVisualEffectView', 'UIWebView', 'UIWindow', 'UIWindowScene', 'UIWindowSceneDestructionRequestOptions', 'UNCalendarNotificationTrigger', 'UNLocationNotificationTrigger', 'UNMutableNotificationContent', 'UNNotification', 'UNNotificationAction', 'UNNotificationAttachment', 'UNNotificationCategory', 'UNNotificationContent', 'UNNotificationRequest', 'UNNotificationResponse', 'UNNotificationServiceExtension', 'UNNotificationSettings', 'UNNotificationSound', 'UNNotificationTrigger', 'UNPushNotificationTrigger', 'UNTextInputNotificationAction', 'UNTextInputNotificationResponse', 'UNTimeIntervalNotificationTrigger', 'UNUserNotificationCenter', 'UTType', 'VNBarcodeObservation', 'VNCircle', 'VNClassificationObservation', 'VNClassifyImageRequest', 'VNContour', 'VNContoursObservation', 'VNCoreMLFeatureValueObservation', 'VNCoreMLModel', 'VNCoreMLRequest', 'VNDetectBarcodesRequest', 'VNDetectContoursRequest', 'VNDetectFaceCaptureQualityRequest', 'VNDetectFaceLandmarksRequest', 'VNDetectFaceRectanglesRequest', 'VNDetectHorizonRequest', 'VNDetectHumanBodyPoseRequest', 'VNDetectHumanHandPoseRequest', 'VNDetectHumanRectanglesRequest', 'VNDetectRectanglesRequest', 'VNDetectTextRectanglesRequest', 'VNDetectTrajectoriesRequest', 'VNDetectedObjectObservation', 'VNDetectedPoint', 'VNDocumentCameraScan', 'VNDocumentCameraViewController', 'VNFaceLandmarkRegion', 'VNFaceLandmarkRegion2D', 'VNFaceLandmarks', 'VNFaceLandmarks2D', 'VNFaceObservation', 'VNFeaturePrintObservation', 'VNGenerateAttentionBasedSaliencyImageRequest', 'VNGenerateImageFeaturePrintRequest', 'VNGenerateObjectnessBasedSaliencyImageRequest', 'VNGenerateOpticalFlowRequest', 'VNGeometryUtils', 'VNHomographicImageRegistrationRequest', 'VNHorizonObservation', 'VNHumanBodyPoseObservation', 'VNHumanHandPoseObservation', 'VNImageAlignmentObservation', 'VNImageBasedRequest', 'VNImageHomographicAlignmentObservation', 'VNImageRegistrationRequest', 'VNImageRequestHandler', 'VNImageTranslationAlignmentObservation', 'VNObservation', 'VNPixelBufferObservation', 'VNPoint', 'VNRecognizeAnimalsRequest', 'VNRecognizeTextRequest', 'VNRecognizedObjectObservation', 'VNRecognizedPoint', 'VNRecognizedPointsObservation', 'VNRecognizedText', 'VNRecognizedTextObservation', 'VNRectangleObservation', 'VNRequest', 'VNSaliencyImageObservation', 'VNSequenceRequestHandler', 'VNStatefulRequest', 'VNTargetedImageRequest', 'VNTextObservation', 'VNTrackObjectRequest', 'VNTrackRectangleRequest', 'VNTrackingRequest', 'VNTrajectoryObservation', 'VNTranslationalImageRegistrationRequest', 'VNVector', 'VNVideoProcessor', 'VNVideoProcessorCadence', 'VNVideoProcessorFrameRateCadence', 'VNVideoProcessorRequestProcessingOptions', 'VNVideoProcessorTimeIntervalCadence', 'VSAccountApplicationProvider', 'VSAccountManager', 'VSAccountManagerResult', 'VSAccountMetadata', 'VSAccountMetadataRequest', 'VSAccountProviderResponse', 'VSSubscription', 'VSSubscriptionRegistrationCenter', 'WCSession', 'WCSessionFile', 'WCSessionFileTransfer', 'WCSessionUserInfoTransfer', 'WKBackForwardList', 'WKBackForwardListItem', 'WKContentRuleList', 'WKContentRuleListStore', 'WKContentWorld', 'WKContextMenuElementInfo', 'WKFindConfiguration', 'WKFindResult', 'WKFrameInfo', 'WKHTTPCookieStore', 'WKNavigation', 'WKNavigationAction', 'WKNavigationResponse', 'WKOpenPanelParameters', 'WKPDFConfiguration', 'WKPreferences', 'WKPreviewElementInfo', 'WKProcessPool', 'WKScriptMessage', 'WKSecurityOrigin', 'WKSnapshotConfiguration', 'WKUserContentController', 'WKUserScript', 'WKWebView', 'WKWebViewConfiguration', 'WKWebpagePreferences', 'WKWebsiteDataRecord', 'WKWebsiteDataStore', 'WKWindowFeatures', '__EntityAccessibilityWrapper'}"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/_julia_builtins.py",
+      "line_number": 150,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "v = eval(Symbol(compl.mod))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/_julia_builtins.py",
+      "line_number": 361,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "v = eval(Symbol(compl.mod))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/_lasso_builtins.py",
+      "line_number": 1847,
+      "issue_type": "weak_crypto",
+      "severity": "medium",
+      "description": "Weak cryptographic algorithm: RC4 is insecure",
+      "recommendation": "Use strong, modern cryptographic algorithms",
+      "code_snippet": "'zip_em_rc4',"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/foxpro.py",
+      "line_number": 70,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "r'DTOC|DTOR|DTOS|DTOT|EDITSOURCE|EMPTY|EOF|ERROR|EVAL(UATE)?|'"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/installers.py",
+      "line_number": 66,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "r'EnableWindow|EnumReg(?:Key|Value)|Exch|Exec(?:Shell|Wait)?|'"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/ncl.py",
+      "line_number": 504,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "'gsnPanelFigureStringsBackgroundFillColor',"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/objective.py",
+      "line_number": 338,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "'ExtendedGraphemeClusterLiteralConvertible',"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pygments/lexers/special.py",
+      "line_number": 115,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "val = ast.literal_eval(val)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/packaging/licenses/__init__.py",
+      "line_number": 100,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        invalid = eval(python_expression, globals(), locals())"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/packaging/licenses/__init__.py",
+      "line_number": 100,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "invalid = eval(python_expression, globals(), locals())"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/refs/head.py",
+      "line_number": 141,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "<git.Commit \"1c09f116cbc2cb4100fb6935bb162daa4723f455\">"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/git/refs/head.py",
+      "line_number": 144,
+      "issue_type": "possible_base64_secret",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected: possible_base64_secret",
+      "recommendation": "Use environment variables or secure configuration management",
+      "code_snippet": "'1c09f116cbc2cb4100fb6935bb162daa4723f455'"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_code/code.py",
+      "line_number": 171,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        return eval(code, self.f_globals, f_locals)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_code/code.py",
+      "line_number": 162,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "def eval(self, code, **vars):"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_code/code.py",
+      "line_number": 171,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "return eval(code, self.f_globals, f_locals)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_py/path.py",
+      "line_number": 1153,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "                        exec(f.read(), mod.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_py/path.py",
+      "line_number": 1153,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(f.read(), mod.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/_py/path.py",
+      "line_number": 1159,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "def sysexec(self, *argv: os.PathLike[str], **popen_opts: Any) -> str:"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py",
+      "line_number": 359,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "    co = compile(tree, strfn, \"exec\", dont_inherit=True)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py",
+      "line_number": 186,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: exec",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        exec(co, module.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py",
+      "line_number": 186,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "exec(co, module.__dict__)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/mark/expression.py",
+      "line_number": 314,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: compile",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        code: types.CodeType = compile("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/mark/expression.py",
+      "line_number": 330,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        ret: bool = bool(eval(self.code, {\"__builtins__\": {}}, MatcherAdapter(matcher)))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/mark/expression.py",
+      "line_number": 281,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "\"\"\"Adapts a matcher function to a locals mapping as required by eval().\"\"\""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/_pytest/mark/expression.py",
+      "line_number": 330,
+      "issue_type": "command_injection",
+      "severity": "high",
+      "description": "Potential command injection vulnerability",
+      "recommendation": "Sanitize input and avoid shell=True",
+      "code_snippet": "ret: bool = bool(eval(self.code, {\"__builtins__\": {}}, MatcherAdapter(matcher)))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_connections.py",
+      "line_number": 359,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        tcp4_addr = eval(wait_for_file(testfile, delete=True))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_connections.py",
+      "line_number": 361,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "        udp4_addr = eval(wait_for_file(testfile, delete=True))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_connections.py",
+      "line_number": 364,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            tcp6_addr = eval(wait_for_file(testfile, delete=True))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_connections.py",
+      "line_number": 366,
+      "issue_type": "dangerous_function",
+      "severity": "high",
+      "description": "Use of dangerous function: eval",
+      "recommendation": "Avoid eval/exec/compile functions, use safer alternatives",
+      "code_snippet": "            udp6_addr = eval(wait_for_file(testfile, delete=True))"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/__init__.py",
+      "line_number": 1401,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "return random.choice(p.cpu_affinity())"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/__init__.py",
+      "line_number": 1953,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "src = random.choice(libs)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/__init__.py",
+      "line_number": 1988,
+      "issue_type": "insecure_random",
+      "severity": "medium",
+      "description": "Use of insecure random number generator",
+      "recommendation": "Use secrets module for cryptographic purposes",
+      "code_snippet": "src = random.choice(libs)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_misc.py",
+      "line_number": 281,
+      "issue_type": "dangerous_function",
+      "severity": "medium",
+      "description": "Potentially dangerous function call: pickle.loads",
+      "recommendation": "Use safer serialization like json",
+      "code_snippet": "        b = pickle.loads("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_misc.py",
+      "line_number": 291,
+      "issue_type": "dangerous_function",
+      "severity": "medium",
+      "description": "Potentially dangerous function call: pickle.loads",
+      "recommendation": "Use safer serialization like json",
+      "code_snippet": "        b = pickle.loads("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_misc.py",
+      "line_number": 302,
+      "issue_type": "dangerous_function",
+      "severity": "medium",
+      "description": "Potentially dangerous function call: pickle.loads",
+      "recommendation": "Use safer serialization like json",
+      "code_snippet": "        b = pickle.loads("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_misc.py",
+      "line_number": 310,
+      "issue_type": "dangerous_function",
+      "severity": "medium",
+      "description": "Potentially dangerous function call: pickle.loads",
+      "recommendation": "Use safer serialization like json",
+      "code_snippet": "        b = pickle.loads("
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/psutil/tests/test_misc.py",
+      "line_number": 247,
+      "issue_type": "dangerous_function",
+      "severity": "medium",
+      "description": "Potentially dangerous function call: pickle.loads",
+      "recommendation": "Use safer serialization like json",
+      "code_snippet": "            b = pickle.loads(a)"
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/certifi/cacert.pem",
+      "line_number": 0,
+      "issue_type": "sensitive_file",
+      "severity": "high",
+      "description": "Sensitive file found: cacert.pem",
+      "recommendation": "Add to .gitignore or remove from repository",
+      "code_snippet": ""
+    },
+    {
+      "file_path": "venv/lib/python3.12/site-packages/pip/_vendor/certifi/cacert.pem",
+      "line_number": 0,
+      "issue_type": "sensitive_file",
+      "severity": "high",
+      "description": "Sensitive file found: cacert.pem",
+      "recommendation": "Add to .gitignore or remove from repository",
+      "code_snippet": ""
+    },
+    {
       "file_path": "requirements-production.txt",
       "line_number": 5,
       "issue_type": "vulnerable_dependency",
@@ -107,6 +1421,6 @@
       "code_snippet": "requests>=2.31.0"
     }
   ],
-  "security_score": 50,
+  "security_score": 0,
   "pass_threshold": 85
 }
