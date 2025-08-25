@@ -1,0 +1,246 @@
+{
+  "analysis_metadata": {
+    "scan_path": "examples",
+    "timestamp": "2025-08-25 23:22:28",
+    "analysis_type": "comprehensive",
+    "tool_version": "0.1.0"
+  },
+  "scan_results": {
+    "files_scanned": 3,
+    "lines_analyzed": 200,
+    "languages_detected": [
+      "java",
+      "go",
+      "python"
+    ],
+    "scan_duration": 0.007311582565307617
+  },
+  "vulnerability_summary": {
+    "total_vulnerabilities": 13,
+    "by_severity": {
+      "critical": 0,
+      "high": 13,
+      "medium": 0,
+      "low": 0
+    },
+    "by_algorithm": {
+      "rsa": 10,
+      "ecc": 2,
+      "dsa": 1,
+      "dh": 0,
+      "ecdsa": 0,
+      "ecdh": 0
+    }
+  },
+  "risk_assessment": {
+    "hndl_risk_score": 100,
+    "risk_level": "CRITICAL",
+    "migration_effort_hours": 130,
+    "estimated_cost_usd": 19500
+  },
+  "migration_plan": {
+    "summary": {
+      "total_vulnerabilities": 13,
+      "critical": 0,
+      "high": 13,
+      "medium": 0,
+      "low": 0
+    },
+    "migration_phases": [
+      {
+        "phase": 1,
+        "name": "Critical Vulnerabilities",
+        "description": "Address all critical and high-severity vulnerabilities",
+        "vulnerability_count": 13,
+        "vulnerability_files": [
+          "/root/repo/examples/vulnerable_crypto.py",
+          "/root/repo/examples/vulnerable_crypto.go",
+          "/root/repo/examples/VulnerableCrypto.java"
+        ],
+        "estimated_effort": "2-4 weeks"
+      },
+      {
+        "phase": 2,
+        "name": "Medium Priority Items",
+        "description": "Address medium-severity vulnerabilities",
+        "vulnerability_count": 0,
+        "vulnerability_files": [],
+        "estimated_effort": "1-2 weeks"
+      },
+      {
+        "phase": 3,
+        "name": "Cleanup and Optimization",
+        "description": "Address remaining low-severity items and optimize",
+        "vulnerability_count": 0,
+        "vulnerability_files": [],
+        "estimated_effort": "1 week"
+      }
+    ],
+    "recommendations": {
+      "immediate_actions": [
+        "Inventory all cryptographic implementations",
+        "Prioritize customer-facing and critical system components",
+        "Begin testing PQC alternatives in development environment"
+      ],
+      "pqc_algorithms": {
+        "key_exchange": "ML-KEM (Kyber) - NIST standardized",
+        "digital_signatures": "ML-DSA (Dilithium) - NIST standardized",
+        "alternative_signatures": "SLH-DSA (SPHINCS+) - Hash-based signatures"
+      },
+      "migration_strategy": "Hybrid approach during transition period (2025-2027)"
+    }
+  },
+  "recommendations": [
+    "Begin immediate inventory of all cryptographic implementations",
+    "Establish PQC migration timeline with 2027 deadline",
+    "Test ML-KEM (Kyber) and ML-DSA (Dilithium) in development environment",
+    "URGENT: Address critical vulnerabilities within 30 days",
+    "Implement crypto-agility framework immediately",
+    "Consider hybrid classical+PQC approach for critical systems"
+  ],
+  "vulnerabilities": [
+    {
+      "file_path": "/root/repo/examples/VulnerableCrypto.java",
+      "line_number": 18,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA KeyPairGenerator detected (quantum-vulnerable)",
+      "recommendation": "Migrate to post-quantum key exchange using ML-KEM (Kyber)",
+      "cwe_id": "CWE-327",
+      "code_snippet": "KeyPairGenerator keyGen = KeyPairGenerator.getInstance(\"RSA\");",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/VulnerableCrypto.java",
+      "line_number": 27,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA KeyPairGenerator detected (quantum-vulnerable)",
+      "recommendation": "Migrate to post-quantum key exchange using ML-KEM (Kyber)",
+      "cwe_id": "CWE-327",
+      "code_snippet": "KeyPairGenerator keyGen = KeyPairGenerator.getInstance(\"RSA\");",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.go",
+      "line_number": 15,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with post-quantum cryptography using liboqs Go bindings",
+      "cwe_id": "CWE-327",
+      "code_snippet": "return rsa.GenerateKey(rand.Reader, 2048) // Will be flagged as vulnerable",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.go",
+      "line_number": 20,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with post-quantum cryptography using liboqs Go bindings",
+      "cwe_id": "CWE-327",
+      "code_snippet": "return rsa.GenerateKey(rand.Reader, 1024) // CRITICAL - too small",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.go",
+      "line_number": 6,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with post-quantum cryptography using liboqs Go bindings",
+      "cwe_id": "CWE-327",
+      "code_snippet": "\"crypto/rsa\"",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.go",
+      "line_number": 14,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with post-quantum cryptography using liboqs Go bindings",
+      "cwe_id": "CWE-327",
+      "code_snippet": "func generateRSAKey() (*rsa.PrivateKey, error) {",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.go",
+      "line_number": 19,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with post-quantum cryptography using liboqs Go bindings",
+      "cwe_id": "CWE-327",
+      "code_snippet": "func generateWeakRSAKey() (*rsa.PrivateKey, error) {",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 10,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-KEM (Kyber) for key exchange or ML-DSA (Dilithium) for signatures",
+      "cwe_id": "CWE-327",
+      "code_snippet": "private_key = rsa.generate_private_key(",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 19,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-KEM (Kyber) for key exchange or ML-DSA (Dilithium) for signatures",
+      "cwe_id": "CWE-327",
+      "code_snippet": "private_key = rsa.generate_private_key(",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 3,
+      "algorithm": "rsa",
+      "severity": "high",
+      "description": "RSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-KEM (Kyber) for key exchange or ML-DSA (Dilithium) for signatures",
+      "cwe_id": "CWE-327",
+      "code_snippet": "from cryptography.hazmat.primitives.asymmetric import rsa, ec, dsa",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 28,
+      "algorithm": "ecc",
+      "severity": "high",
+      "description": "ECC key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-DSA (Dilithium) for signatures or ML-KEM (Kyber) for key exchange",
+      "cwe_id": "CWE-327",
+      "code_snippet": "private_key = ec.generate_private_key(ec.SECP256R1())",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 28,
+      "algorithm": "ecc",
+      "severity": "high",
+      "description": "ECC key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-DSA (Dilithium) for signatures or ML-KEM (Kyber) for key exchange",
+      "cwe_id": "CWE-327",
+      "code_snippet": "private_key = ec.generate_private_key(ec.SECP256R1())",
+      "key_size": null
+    },
+    {
+      "file_path": "/root/repo/examples/vulnerable_crypto.py",
+      "line_number": 34,
+      "algorithm": "dsa",
+      "severity": "high",
+      "description": "DSA key generation detected (quantum-vulnerable)",
+      "recommendation": "Replace with ML-DSA (Dilithium) for digital signatures",
+      "cwe_id": "CWE-327",
+      "code_snippet": "private_key = dsa.generate_private_key(",
+      "key_size": null
+    }
+  ]
+}

@@ -581,7 +581,9 @@ def analyze(ctx: click.Context, path: Path, output: Optional[Path],
                 "severity": vuln.severity.value,
                 "description": vuln.description,
                 "recommendation": vuln.recommendation,
-                "cwe_id": vuln.cwe_id
+                "cwe_id": vuln.cwe_id,
+                "code_snippet": getattr(vuln, 'code_snippet', ''),
+                "key_size": getattr(vuln, 'key_size', None)
             }
             for vuln in scan_results.vulnerabilities
         ]

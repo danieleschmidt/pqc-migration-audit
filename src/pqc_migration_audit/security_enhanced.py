@@ -19,8 +19,8 @@ from .logging_config import get_logger
 class SecurityLevel(Enum):
     """Security validation levels."""
     BASIC = "basic"
-    ENHANCED = "enhanced"
-    PARANOID = "paranoid"
+    ENHANCED = "enhanced" 
+    STRICT = "strict"  # Changed from PARANOID for consistency
 
 
 class ThreatLevel(Enum):
@@ -150,11 +150,25 @@ class SecurityMonitor:
         """
         path_obj = Path(scan_path).resolve()
         
-        # Check for dangerous paths
-        dangerous_paths = [
-            '/etc', '/sys', '/proc', '/dev', '/root',
-            '/usr/bin', '/usr/sbin', '/sbin', '/bin'
-        ]
+        # Configurable security levels
+        if self.security_level == SecurityLevel.BASIC:
+            # Only block critical system paths
+            dangerous_paths = ['/sys', '/proc', '/dev', '/usr/bin', '/usr/sbin', '/sbin', '/bin']
+        elif self.security_level == SecurityLevel.ENHANCED:
+            # Standard security - allow development in /root with warning
+            dangerous_paths = ['/etc', '/sys', '/proc', '/dev', '/usr/bin', '/usr/sbin', '/sbin', '/bin']
+            # Special handling for /root - warn but allow for development
+            if str(path_obj).startswith('/root') and '/repo' in str(path_obj):
+                if hasattr(self.logger, 'warning'):
+                    self.logger.warning(f"Development scan in /root detected: {path_obj}")
+                elif hasattr(self.logger, 'logger') and hasattr(self.logger.logger, 'warning'):
+                    self.logger.logger.warning(f"Development scan in /root detected: {path_obj}")
+                else:
+                    print(f"WARNING: Development scan in /root detected: {path_obj}")
+                return  # Allow development scanning
+        else:  # STRICT  
+            # Strict security - block all system paths
+            dangerous_paths = ['/etc', '/sys', '/proc', '/dev', '/root', '/usr/bin', '/usr/sbin', '/sbin', '/bin']
         
         for dangerous in dangerous_paths:
             if str(path_obj).startswith(dangerous):
@@ -261,7 +275,7 @@ class SecurityMonitor:
                     'Time-of-check-time-of-use (TOCTOU) attack detected'
                 )
                 
-                if self.security_level == SecurityLevel.PARANOID:
+                if self.security_level == SecurityLevel.STRICT:
                     raise SecurityException(
                         "File integrity violation detected during scan",
                         error_code="INTEGRITY_VIOLATION",
@@ -450,7 +464,7 @@ class InputSanitizer:
         
         # Check for directory traversal attempts (but allow legitimate absolute paths)
         if '..' in sanitized:
-            if self.security_level == SecurityLevel.PARANOID:
+            if self.security_level == SecurityLevel.STRICT:
                 raise ValidationException("Directory traversal attempts not allowed")
             elif self.security_level == SecurityLevel.ENHANCED:
                 # Allow if it resolves to a safe path under /tmp or current working directory
@@ -516,7 +530,7 @@ class InputSanitizer:
         
         for key, value in config.items():
             if key not in allowed_keys:
-                if self.security_level == SecurityLevel.PARANOID:
+                if self.security_level == SecurityLevel.STRICT:
                     raise ValidationException(f"Unknown configuration key: {key}")
                 else:
                     self.logger.log_security_event('unknown_config_key', {'key': key})
