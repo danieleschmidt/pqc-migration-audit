@@ -1,0 +1,55 @@
+{
+  "analysis_metadata": {
+    "scan_path": "examples",
+    "timestamp": "2025-08-25 23:21:54",
+    "analysis_type": "comprehensive",
+    "tool_version": "0.1.0"
+  },
+  "scan_results": {
+    "files_scanned": 3,
+    "lines_analyzed": 200,
+    "languages_detected": [
+      "java",
+      "python",
+      "go"
+    ],
+    "scan_duration": 0.006961822509765625
+  },
+  "vulnerability_summary": {
+    "total_vulnerabilities": 13,
+    "by_severity": {
+      "critical": 0,
+      "high": 13,
+      "medium": 0,
+      "low": 0
+    },
+    "by_algorithm": {
+      "rsa": 10,
+      "ecc": 2,
+      "dsa": 1,
+      "dh": 0,
+      "ecdsa": 0,
+      "ecdh": 0
+    }
+  },
+  "risk_assessment": {
+    "hndl_risk_score": 100,
+    "risk_level": "CRITICAL",
+    "migration_effort_hours": 130,
+    "estimated_cost_usd": 19500
+  },
+  "migration_plan": {
+    "summary": {
+      "total_vulnerabilities": 13,
+      "critical": 0,
+      "high": 13,
+      "medium": 0,
+      "low": 0
+    },
+    "migration_phases": [
+      {
+        "phase": 1,
+        "name": "Critical Vulnerabilities",
+        "description": "Address all critical and high-severity vulnerabilities",
+        "vulnerabilities": [
+          

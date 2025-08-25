@@ -1052,21 +1052,24 @@ class CryptoAuditor:
                     "phase": 1,
                     "name": "Critical Vulnerabilities",
                     "description": "Address all critical and high-severity vulnerabilities",
-                    "vulnerabilities": [v for v in results.vulnerabilities if v.severity in [Severity.CRITICAL, Severity.HIGH]],
+                    "vulnerability_count": len([v for v in results.vulnerabilities if v.severity in [Severity.CRITICAL, Severity.HIGH]]),
+                    "vulnerability_files": list(set([v.file_path for v in results.vulnerabilities if v.severity in [Severity.CRITICAL, Severity.HIGH]])),
                     "estimated_effort": "2-4 weeks"
                 },
                 {
                     "phase": 2,
                     "name": "Medium Priority Items",
                     "description": "Address medium-severity vulnerabilities",
-                    "vulnerabilities": [v for v in results.vulnerabilities if v.severity == Severity.MEDIUM],
+                    "vulnerability_count": len([v for v in results.vulnerabilities if v.severity == Severity.MEDIUM]),
+                    "vulnerability_files": list(set([v.file_path for v in results.vulnerabilities if v.severity == Severity.MEDIUM])),
                     "estimated_effort": "1-2 weeks"
                 },
                 {
                     "phase": 3,
                     "name": "Cleanup and Optimization",
                     "description": "Address remaining low-severity items and optimize",
-                    "vulnerabilities": [v for v in results.vulnerabilities if v.severity == Severity.LOW],
+                    "vulnerability_count": len([v for v in results.vulnerabilities if v.severity == Severity.LOW]),
+                    "vulnerability_files": list(set([v.file_path for v in results.vulnerabilities if v.severity == Severity.LOW])),
                     "estimated_effort": "1 week"
                 }
             ],
